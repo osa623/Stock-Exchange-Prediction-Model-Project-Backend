@@ -5,7 +5,7 @@
 import math
 from income import *
 from fposition import *
-
+from cashflow import *
 
 # =====================================================
 # OUTPUT
@@ -207,6 +207,43 @@ if __name__ == "__main__":
 
 
 
+    fcf = free_cash_flow(d["cash_from_operations"], d["capex"])
+    fcf_ps = free_cash_flow_per_share(fcf, d["shares_outstanding"])
+    ccr = cash_conversion_ratio(d["cash_from_operations"], d["net_income"])
+    ocf_margin = operating_cash_flow_margin(d["cash_from_operations"], d["revenue"])
+    capex_r = capex_ratio(d["capex"], d["cash_from_operations"])
+    ocf_debt = ocf_to_debt_ratio(d["cash_from_operations"], debt)
+
+    net_inv_cf = net_investing_cash_flow(d["capex"], d["asset_sales"])
+    asset_reinv = asset_reinvestment_ratio(d["capex"], d["depreciation"])
+    net_debt_move = net_debt_issued(d["debt_issued"], d["debt_repaid"])
+    div_payout = dividend_payout_cash(d["dividends_paid"], d["cash_from_operations"])
+
+    debt_cov_fcf = debt_coverage_ratio_fcf(fcf, debt)
+    cf_to_ni = cash_flow_to_net_income(d["cash_from_operations"], d["net_income"])
+    croa = cash_return_on_assets(d["cash_from_operations"], d["total_assets"])
+    croe = cash_return_on_equity(d["cash_from_operations"], d["equity"])
+    cf_adequacy = cash_flow_adequacy_ratio(
+        d["cash_from_operations"],
+        d["capex"],
+        d["debt_repaid"],
+        d["dividends_paid"]
+    )
+
+    fcf_yield = free_cash_flow_yield(fcf, d["market_cap"])
+
+    net_cf = net_cash_flow(
+        d["cash_from_operations"],
+        d["cash_from_investing"],
+        d["cash_from_financing"]
+    )
+
+    cf_vol = cash_flow_volatility(d["cash_from_operations"], years)
+    cash_op_lev = operating_leverage_cash(
+        d["cash_from_operations"],
+        d["revenue"],
+        years
+    )
 
 
 
@@ -298,6 +335,25 @@ if __name__ == "__main__":
         "SFP 42. Capital Preservation Ratio": capital_preservation,
 
 
+        "SCF 1. Free Cash Flow": fcf,
+        "SCF 2. Free Cash Flow per Share": fcf_ps,
+        "SCF 3. Cash Conversion Ratio": ccr,
+        "SCF 4. OCF Margin": ocf_margin,
+        "SCF 5. CapEx Ratio": capex_r,
+        "SCF 6. OCF to Debt Ratio": ocf_debt,
+        "SCF 7. Net Investing Cash Flow": net_inv_cf,
+        "SCF 8. Asset Reinvestment Ratio": asset_reinv,
+        "SCF 9. Net Debt Issued / Repaid": net_debt_move,
+        "SCF 10. Dividend Payout (Cash)": div_payout,
+        "SCF 11. Debt Coverage Ratio (FCF)": debt_cov_fcf,
+        "SCF 12. Cash Flow to Net Income": cf_to_ni,
+        "SCF 13. Cash ROA": croa,
+        "SCF 14. Cash ROE": croe,
+        "SCF 15. Cash Flow Adequacy Ratio": cf_adequacy,
+        "SCF 16. Free Cash Flow Yield": fcf_yield,
+        "SCF 17. Net Cash Flow": net_cf,
+        "SCF 18. Cash Flow Volatility": cf_vol,
+        "SCF 19. Operating Leverage (Cash)": cash_op_lev,
 
 
 

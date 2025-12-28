@@ -1,11 +1,12 @@
 For this report layout 
 
-first it should identify the Income Statement | statement of profit and loss | Statement of comprehensive income | P&L
-then statement of financial position | Balane Sheet | Assests and Liabilities
-then statement of clash flows | clash flows | cash movements 
+at first  when i uploaded the pdf it should identify below topics from the pdf pages and then for every layout it should extract values under 'Group' tag not company and there are two years So this model should get those values for those 2 years but prepare the final text for seperate years 
 
+Income Statement
+Financial position statement
+Clash flow statement
 
-
+according to the target_schema_bank file those values should be printed
 
 
 

@@ -5,6 +5,8 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 from src.pdf.loader import PDFLoader
 from src.pdf.ocr import OCRProcessor
+from src.pdf.page_locator import PageLocator
+from src.pdf.table_extractor import TableExtractor
 from src.extraction.currency_detector import detect_currency_and_unit
 from src.extraction.period_detector import detect_period
 from src.extraction.key_value import KeyValueExtractor
@@ -14,7 +16,7 @@ from src.validation.confidence_score import ConfidenceScorer
 from src.storage.save_json import save_extraction_result
 from config.target_schema_bank import TARGET_FIELDS
 from src.utils.logger import get_logger
-from src.utils.helpers import load_config
+from src.utils.helpers import load_config, fuzzy_match
 
 logger = get_logger(__name__)
 
@@ -113,34 +115,79 @@ class ExtractionPipeline:
             logger.info(f"Metadata: Currency={currency_info['currency']}, "
                        f"Unit={currency_info['unit']}, Periods={len(periods)}, Pages={len(text)}")
             
-            # Step 5: Extract ALL fields from target_schema_bank across entire PDF
+            # Step 5: Locate statement pages and extract tables (prefer 'Group' columns)
             logger.info("="*80)
-            logger.info("EXTRACTING ALL FIELDS FROM ENTIRE PDF")
+            logger.info("LOCATING STATEMENT PAGES AND EXTRACTING TABLES (GROUP COLUMNS PREFERRED)")
             logger.info("="*80)
-            
-            results = {}
+
+            page_locator = PageLocator(pdf_loader)
+            sections_pages = page_locator.locate_financial_statements()
+            table_extractor = TableExtractor(self.config)
             key_value_extractor = KeyValueExtractor(self.config)
-            
+
+            # Mapping between page_locator section keys and TARGET_FIELDS keys
+            section_map = {
+                'income_statement': 'Income_Statement',
+                'balance_sheet': 'Financial Position Statement',
+                'cash_flow': 'Cash Flow Statement'
+            }
+
+            results = {}
             total_fields = 0
-            # Process each section's fields against the entire PDF text
-            for section_name, target_fields in TARGET_FIELDS.items():
+
+            # Process each known section and prefer table-based extraction first
+            for sec_key, schema_key in section_map.items():
+                target_fields = TARGET_FIELDS.get(schema_key, [])
                 if not target_fields:
-                    logger.warning(f"No target fields defined for {section_name}")
                     continue
-                
+
                 total_fields += len(target_fields)
-                logger.info(f"\n📋 Extracting {len(target_fields)} fields for: {section_name}")
-                
-                # Extract values from entire PDF (pass section_name as statement_type)
-                extracted_values = key_value_extractor.extract(
-                    full_text,
-                    section_name,  # statement_type
-                    None  # period
-                )
-                
-                results[section_name] = extracted_values
-                found_count = len([v for v in extracted_values.values() if v is not None])
-                logger.info(f"   ✓ Found {found_count}/{len(target_fields)} values for {section_name}")
+                logger.info(f"\n📋 Processing section: {schema_key} (pages: {sections_pages.get(sec_key)})")
+
+                # Prepare per-year container for this section
+                section_output: Dict[str, Dict[str, Any]] = {}
+
+                pages = sections_pages.get(sec_key, list(range(len(text))))
+
+                # Extract tables from the located pages
+                tables_by_page = table_extractor.extract_tables_from_pages(pdf_path, pages)
+
+                # For each table, extract multi-column values (prefer Group columns)
+                for page_num, tables in tables_by_page.items():
+                    for df in tables:
+                        table_items = table_extractor.extract_multi_column_values(df)
+                        # table_items: {item_name: {year_label: value}}
+                        for item_name, year_map in table_items.items():
+                            # Try to match item_name to one of the target fields
+                            matched = fuzzy_match(item_name, target_fields, threshold=80)
+                            if matched:
+                                for year_label, value in year_map.items():
+                                    if year_label not in section_output:
+                                        section_output[year_label] = {}
+                                    # If field not already set for that year, set it
+                                    section_output[year_label].setdefault(matched, value)
+
+                # Fallback: use text-based key-value extraction for any missing fields
+                # (this does not guarantee per-year values; it tries to populate missing fields)
+                missing = []
+                for field in target_fields:
+                    found_any = any(field in yr_map for yr_map in section_output.values())
+                    if not found_any:
+                        missing.append(field)
+
+                if missing:
+                    logger.info(f"Fields missing from tables for {schema_key}: {len(missing)}. Using text fallback.")
+                    section_text = page_locator.get_section_text(sec_key)
+                    fallback_data = key_value_extractor.extract(section_text or full_text, schema_key, None)
+                    # fallback_data is flat {field: value}; attach to a generic 'unspecified' year if no years
+                    default_year = 'unspecified'
+                    for f, v in fallback_data.items():
+                        if f in missing and v is not None:
+                            section_output.setdefault(default_year, {})[f] = v
+
+                results[schema_key] = section_output
+                found_count = sum(len(yr) for yr in section_output.values())
+                logger.info(f"   ✓ Found {found_count}/{len(target_fields)} values for {schema_key}")
             
             logger.info(f"\n{'='*80}")
             logger.info(f"EXTRACTION COMPLETE: Processed {total_fields} total fields")

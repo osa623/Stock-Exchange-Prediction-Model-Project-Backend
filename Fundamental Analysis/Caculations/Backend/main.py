@@ -4,6 +4,8 @@
 
 import math
 from income import *
+from fposition import *
+
 
 # =====================================================
 # OUTPUT
@@ -111,49 +113,194 @@ if __name__ == "__main__":
     pretax_return = pre_tax_return_proxy(op, d["revenue"])
 
 
+    nav = net_asset_value(d["total_assets"], d["total_liabilities"])
+    nav_ps = nav_per_share(nav, d["shares_outstanding"])
+
+    tnw = tangible_net_worth(d["equity"], d["intangibles"])
+    bvps = book_value_per_share(d["equity"], d["shares_outstanding"])
+
+    wc = working_capital(d["current_assets"], d["current_liabilities"])
+    current_r = current_ratio(d["current_assets"], d["current_liabilities"])
+    quick_r = quick_ratio(d["current_assets"], d["inventory"], d["current_liabilities"])
+    cash_r = cash_ratio(d["cash"], d["current_liabilities"])
+
+    debt = total_debt(d["short_term_debt"], d["long_term_debt"])
+    debt_equity = debt_to_equity(debt, d["equity"])
+    debt_assets = debt_to_assets(debt, d["total_assets"])
+    equity_r = equity_ratio(d["equity"], d["total_assets"])
+    lt_debt_r = long_term_debt_ratio(d["long_term_debt"], d["total_assets"])
+
+    cap_emp = capital_employed(d["equity"], d["long_term_debt"])
+    net_debt_v = net_debt(debt, d["cash"])
+
+
+    nwc_ratio = net_working_capital_ratio(wc, d["revenue"])
+
+    fixed_asset_r = fixed_asset_ratio(d["fixed_assets"], d["total_assets"])
+    intangible_r = intangible_asset_ratio(d["intangibles"], d["total_assets"])
+    inventory_r = inventory_ratio(d["inventory"], d["total_assets"])
+    receivables_r = receivables_ratio(d["receivables"], d["total_assets"])
+
+    roa_v = roa(d["net_income"], d["total_assets"])
+    roe_v = roe(d["net_income"], d["equity"])
+    roce_v = roce(op, cap_emp)
+
+    asset_turn = asset_turnover(d["revenue"], d["total_assets"])
+    fin_leverage = financial_leverage(d["total_assets"], d["equity"])
+
+    nav_growth = net_asset_growth(nav, years)
+
+    defensive_interval = defensive_interval_ratio(
+        d["cash"],
+        d["receivables"],
+        d["daily_operating_expenses"]
+    )
+
+    net_liquid = net_liquid_assets(
+        d["current_assets"],
+        d["inventory"],
+        d["total_liabilities"]
+    )
+
+    liquidity_cov = liquidity_coverage_ratio(
+        d["current_assets"],
+        d["current_liabilities"]
+    )
+
+    ncav_v = ncav(d["current_assets"], d["total_liabilities"])
+
+
+
+    ncav_ps = ncav_per_share(ncav_v, d["shares_outstanding"])
+    bs_margin_safety = balance_sheet_margin_of_safety(ncav_v, d["market_cap"])
+
+    tangible_assets = {
+        y: d["total_assets"][y] - d["intangibles"][y]
+        for y in years
+    }
+
+    asset_quality = asset_quality_ratio(tangible_assets, d["total_assets"])
+    capital_intensity = capital_intensity_ratio(d["total_assets"], d["revenue"])
+
+    debt_maturity = debt_maturity_ratio(
+        d["short_term_debt"],
+        debt
+    )
+
+    struct_leverage = structural_leverage_ratio(debt, cap_emp)
+    equity_buffer = equity_buffer_ratio(d["equity"], d["total_assets"])
+    retained_ratio = retained_earnings_ratio(d["retained_earnings"], d["equity"])
+
+    dilution_risk = shareholder_dilution_risk(d["shares_outstanding"], years)
+
+    net_oper_assets = net_operating_assets(
+        d["operating_assets"],
+        d["operating_liabilities"]
+    )
+
+    fin_obligations = financial_obligations(debt, d["current_liabilities"])
+
+    capital_preservation = capital_preservation_ratio(
+        d["equity"],
+        d["intangibles"]
+    )
+
+
+
+
 
 
     results = {
-        "1. Revenue Growth Rate": rev_growth,
-        "2. Gross Profit": gp,
-        "3. Gross Profit Margin": gp_margin,
-        "4. Operating Profit (EBIT)": op,
-        "5. Operating Margin": op_margin,
-        "6. EBITDA": eb,
-        "7. EBITDA Margin": ebitda_m,
-        "8. Net Profit Margin": net_m,
-        "9. Effective Tax Rate": eff_tax,
-        "10. Interest Coverage Ratio": interest_cov,
-        "11. Earnings Quality (Accrual)": accrual,
-        "12. Operating Expense Ratio": op_exp_ratio,
-        "13. Cost Structure Breakdown": cost_struct,
+        "IS1. Revenue Growth Rate": rev_growth,
+        "IS2. Gross Profit": gp,
+        "IS3. Gross Profit Margin": gp_margin,
+        "IS4. Operating Profit (EBIT)": op,
+        "IS5. Operating Margin": op_margin,
+        "IS6. EBITDA": eb,
+        "IS7. EBITDA Margin": ebitda_m,
+        "IS8. Net Profit Margin": net_m,
+        "IS9. Effective Tax Rate": eff_tax,
+        "IS10. Interest Coverage Ratio": interest_cov,
+        "IS11. Earnings Quality (Accrual)": accrual,
+        "IS12. Operating Expense Ratio": op_exp_ratio,
+        "IS13. Cost Structure Breakdown": cost_struct,
         
-        "1. Operating Leverage": op_leverage,
-        "2. Contribution Margin": contrib_margin,
-        "3. Break Even Revenue": break_even,
-        "4. Earnings Growth": earn_growth,
-        "5. EBIT vs Revenue Growth": ebit_vs_rev,
-        "6. Expense Elasticity": exp_elastic,
-        "7. Core Earnings": core,
-        "8. Normalized Earnings": norm_earn,
-        "9. Earnings Volatility": volatility,
-        "10. Operating Margin Trend": op_margin_tr,
-        "11. Pricing Power": pricing_power,
-        "12. Cost Inflation Absorption": cost_absorb,
-        "13. Earnings Quality Score": eq_score,
+        "IS1. Operating Leverage": op_leverage,
+        "IS2. Contribution Margin": contrib_margin,
+        "IS3. Break Even Revenue": break_even,
+        "IS4. Earnings Growth": earn_growth,
+        "IS5. EBIT vs Revenue Growth": ebit_vs_rev,
+        "IS6. Expense Elasticity": exp_elastic,
+        "IS7. Core Earnings": core,
+        "IS8. Normalized Earnings": norm_earn,
+        "IS9. Earnings Volatility": volatility,
+        "IS10. Operating Margin Trend": op_margin_tr,
+        "IS11. Pricing Power": pricing_power,
+        "IS12. Cost Inflation Absorption": cost_absorb,
+        "IS13. Earnings Quality Score": eq_score,
 
-        "1. Incremental Margin": inc_margin,
-        "2. Incremental EBITDA Margin": inc_ebitda_margin,
-        "3. Recurring Earnings Ratio": recurring_ratio,
-        "4. Profit Conversion Ratio": profit_conversion,
-        "5. Depreciation Intensity": dep_intensity,
-        "6. Earnings Sensitivity to Costs": earn_sensitivity,
-        "7. Operating Safety Margin": op_safety,
-        "8. Fixed Cost Coverage": fixed_cov,
-        "9. Growth Persistence Index": growth_persistence,
-        "10. Margin Stability Score": margin_stability,
-        "11. Earnings Power": earn_power,
-        "12. Pre-Tax Return Proxy": pretax_return,
+        "IS1. Incremental Margin": inc_margin,
+        "IS2. Incremental EBITDA Margin": inc_ebitda_margin,
+        "IS3. Recurring Earnings Ratio": recurring_ratio,
+        "IS4. Profit Conversion Ratio": profit_conversion,
+        "IS5. Depreciation Intensity": dep_intensity,
+        "IS6. Earnings Sensitivity to Costs": earn_sensitivity,
+        "IS7. Operating Safety Margin": op_safety,
+        "IS8. Fixed Cost Coverage": fixed_cov,
+        "IS9. Growth Persistence Index": growth_persistence,
+        "IS10. Margin Stability Score": margin_stability,
+        "IS11. Earnings Power": earn_power,
+        "IS12. Pre-Tax Return Proxy": pretax_return,
+
+        "SFP 1. Net Asset Value": nav,
+        "SFP 2. NAV per Share": nav_ps,
+        "SFP 3. Tangible Net Worth": tnw,
+        "SFP 4. Book Value per Share": bvps,
+        "SFP 5. Working Capital": wc,
+        "SFP 6. Current Ratio": current_r,
+        "SFP 7. Quick Ratio": quick_r,
+        "SFP 8. Cash Ratio": cash_r,
+        "SFP 9. Total Debt": debt,
+        "SFP 10. Debt to Equity": debt_equity,
+        "SFP 11. Debt to Assets": debt_assets,
+        "SFP 12. Equity Ratio": equity_r,
+        "SFP 13. Long-Term Debt Ratio": lt_debt_r,
+        "SFP 14. Capital Employed": cap_emp,
+        "SFP 15. Net Debt": net_debt_v,
+
+        "SFP 16. Net Working Capital Ratio": nwc_ratio,
+        "SFP 17. Fixed Asset Ratio": fixed_asset_r,
+        "SFP 18. Intangible Asset Ratio": intangible_r,
+        "SFP 19. Inventory Ratio": inventory_r,
+        "SFP 20. Receivables Ratio": receivables_r,
+        "SFP 21. Return on Assets (ROA)": roa_v,
+        "SFP 22. Return on Equity (ROE)": roe_v,
+        "SFP 23. Return on Capital Employed (ROCE)": roce_v,
+        "SFP 24. Asset Turnover": asset_turn,
+        "SFP 25. Financial Leverage": fin_leverage,
+        "SFP 26. Net Asset Growth Rate": nav_growth,
+        "SFP 27. Defensive Interval Ratio": defensive_interval,
+        "SFP 28. Net Liquid Assets": net_liquid,
+        "SFP 29. Liquidity Coverage Ratio": liquidity_cov,
+        
+        "SFP 30. Net Current Asset Value (NCAV)": ncav_v,
+        "SFP 31. NCAV per Share": ncav_ps,
+        "SFP 32. Balance Sheet Margin of Safety": bs_margin_safety,
+        "SFP 33. Asset Quality Ratio": asset_quality,
+        "SFP 34. Capital Intensity Ratio": capital_intensity,
+        "SFP 35. Debt Maturity Ratio": debt_maturity,
+        "SFP 36. Structural Leverage Ratio": struct_leverage,
+        "SFP 37. Equity Buffer Ratio": equity_buffer,
+        "SFP 38. Retained Earnings Ratio": retained_ratio,
+        "SFP 39. Shareholder Dilution Risk": dilution_risk,
+        "SFP 40. Net Operating Assets (NOA)": net_oper_assets,
+        "SFP 41. Financial Obligations": fin_obligations,
+        "SFP 42. Capital Preservation Ratio": capital_preservation,
+
+
+
+
+
 
         
     }

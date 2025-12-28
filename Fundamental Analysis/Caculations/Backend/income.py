@@ -207,7 +207,6 @@ def earnings_sensitivity_to_costs(cogs, revenue, years):
 def operating_safety_margin(op, revenue):
     return {y: op[y] / revenue[y] for y in revenue}
 
-
 def fixed_cost_coverage(ebitda, fixed_costs):
     return {
         y: ebitda[y] / fixed_costs[y] if fixed_costs[y] != 0 else None
@@ -218,7 +217,6 @@ def fixed_cost_coverage(ebitda, fixed_costs):
 def growth_persistence_index(revenue_growth):
     vals = [v for v in revenue_growth.values() if v is not None]
     return sum(vals) / len(vals) if vals else 0
-
 
 def margin_stability_score(op_margin):
     import statistics

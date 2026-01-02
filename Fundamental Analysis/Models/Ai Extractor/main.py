@@ -85,6 +85,7 @@ def display_menu(pdf_files):
         print(f"  [{i}] {relative_path} ({size_mb:.1f} MB)")
     
     print(f"  [A] Process ALL {len(pdf_files)} files (batch mode)")
+    print(f"  [S] STRICT MODE - Bank/Group separation (ARCHITECTURE.md)")
     print(f"  [Q] Quit")
     print("-"*70)
     
@@ -94,13 +95,16 @@ def display_menu(pdf_files):
 def get_user_choice(pdf_files):
     """Get user's selection."""
     while True:
-        choice = input("\nSelect option (number, A for all, Q to quit): ").strip().upper()
+        choice = input("\nSelect option (number, A for all, S for strict, Q to quit): ").strip().upper()
         
         if choice == 'Q':
             return None, 'quit'
         
         if choice == 'A':
             return pdf_files, 'batch'
+        
+        if choice == 'S':
+            return pdf_files, 'strict'
         
         try:
             index = int(choice) - 1
@@ -109,7 +113,7 @@ def get_user_choice(pdf_files):
             else:
                 print(f"❌ Invalid number. Please enter 1-{len(pdf_files)}")
         except ValueError:
-            print("❌ Invalid input. Please enter a number, A, or Q")
+            print("❌ Invalid input. Please enter a number, A, S, or Q")
 
 
 def process_single_pdf(pdf_path, pipeline):
@@ -188,6 +192,46 @@ def process_single_pdf(pdf_path, pipeline):
         return False
 
 
+def process_strict_mode(pdf_files, pipeline):
+    """Process in STRICT mode (Bank/Group separation)."""
+    print("\n" + "="*70)
+    print("STRICT EXTRACTION MODE")
+    print("="*70)
+    print("Features: Bank/Group separation, Year1/Year2 mapping, 3 mandatory sections")
+    print("="*70 + "\n")
+    
+    if len(pdf_files) > 1:
+        print("Select PDF:")
+        for i, pdf in enumerate(pdf_files, 1):
+            print(f"  [{i}] {pdf.name}")
+        choice = int(input("\nEnter number: ").strip())
+        pdf_path = pdf_files[choice - 1]
+    else:
+        pdf_path = pdf_files[0]
+    
+    print(f"\nProcessing: {pdf_path.name}")
+    print("Mode: STRICT (Bank/Group + Year1/Year2)")
+    print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+    
+    try:
+        result = pipeline.strict_extract_from_pdf(str(pdf_path))
+        
+        if result.get('success'):
+            print("\n✓ EXTRACTION SUCCESSFUL\n")
+            print(f"Bank file:  {result.get('bank_file')}")
+            print(f"Group file: {result.get('group_file')}")
+            stats = result.get('statistics', {})
+            print(f"\nBank fields:  {stats.get('bank_fields_extracted', 0)}")
+            print(f"Group fields: {stats.get('group_fields_extracted', 0)}\n")
+            return True
+        else:
+            print(f"\n✗ FAILED: {result.get('error')}\n")
+            return False
+    except Exception as e:
+        print(f"\n✗ ERROR: {e}\n")
+        return False
+
+
 def process_batch(pdf_files, pipeline):
     """Process multiple PDF files."""
     print("\n" + "="*70)
@@ -262,6 +306,9 @@ def main():
     # Process files
     if mode == 'single':
         success = process_single_pdf(selected_files[0], pipeline)
+        sys.exit(0 if success else 1)
+    elif mode == 'strict':
+        success = process_strict_mode(selected_files, pipeline)
         sys.exit(0 if success else 1)
     else:  # batch
         process_batch(selected_files, pipeline)

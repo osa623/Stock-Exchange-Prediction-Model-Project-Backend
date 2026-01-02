@@ -101,6 +101,35 @@ def save_extraction_result(
         return ""
 
 
+def save_dual_extraction_result(
+    bank_data: Dict[str, Any],
+    group_data: Dict[str, Any],
+    bank_path: str,
+    group_path: str
+) -> bool:
+    """
+    Save Bank and Group extraction results to separate JSON files.
+    
+    Args:
+        bank_data: Bank data structure
+        group_data: Group data structure
+        bank_path: Path for Bank JSON
+        group_path: Path for Group JSON
+    
+    Returns:
+        True if both saved successfully
+    """
+    try:
+        bank_ok = save_json(bank_data, bank_path, pretty=True)
+        group_ok = save_json(group_data, group_path, pretty=True)
+        if bank_ok and group_ok:
+            logger.info(f"Dual extraction saved: Bank={bank_path}, Group={group_path}")
+        return bank_ok and group_ok
+    except Exception as e:
+        logger.error(f"Error saving dual extraction: {e}")
+        return False
+
+
 def load_json(file_path: str) -> Dict[str, Any]:
     """
     Load data from JSON file.

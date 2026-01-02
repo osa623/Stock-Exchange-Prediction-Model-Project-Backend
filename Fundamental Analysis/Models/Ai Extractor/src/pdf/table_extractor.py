@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from src.utils.logger import get_logger
 from src.utils.helpers import clean_text, extract_numbers
+import re
 
 logger = get_logger(__name__)
 
@@ -50,7 +51,9 @@ class TableExtractor:
                     for i, table in enumerate(page_tables):
                         if table and len(table) > 0:
                             # Convert to DataFrame
-                            df = pd.DataFrame(table[1:], columns=table[0])
+                            # For financial statements, first row is often data, not headers
+                            # Use numeric column indices instead
+                            df = pd.DataFrame(table)
                             
                             # Clean the DataFrame
                             df = self.clean_table(df)
@@ -111,10 +114,13 @@ class TableExtractor:
             
             # Clean text in all cells
             for col in df.columns:
-                if df[col].dtype == 'object':
-                    df[col] = df[col].apply(
-                        lambda x: clean_text(str(x)) if pd.notna(x) else None
-                    )
+                try:
+                    if pd.api.types.is_object_dtype(df[col]):
+                        df[col] = df[col].apply(
+                            lambda x: clean_text(str(x)) if pd.notna(x) else None
+                        )
+                except:
+                    pass
             
             # Remove rows where all values are None or empty strings
             df = df[df.apply(lambda row: row.notna().any(), axis=1)]
@@ -258,32 +264,49 @@ class TableExtractor:
             Dictionary with structure: {item_name: {year1: value1, year2: value2}}
         """
         data = {}
-        
+
         try:
             if df.empty or len(df.columns) < 2:
                 return data
-            
-            # First column is typically the item name
+
+            # Identify item column and value columns
             item_column = df.columns[0]
             value_columns = df.columns[1:]
-            
+
+            # Prefer columns that contain 'group' in header
+            group_cols = [col for col in value_columns if 'group' in str(col).lower()]
+            if group_cols:
+                selected_value_columns = group_cols
+            else:
+                # Fallback: use the last two numeric-like columns
+                selected_value_columns = list(value_columns)[-2:]
+
+            # Helper to get a year/label from column header
+            def header_to_label(col):
+                col_text = str(col)
+                m = re.search(r'(19|20)\d{2}', col_text)
+                if m:
+                    return m.group(0)
+                return clean_text(col_text)
+
             for _, row in df.iterrows():
                 item_name = row[item_column]
-                
+
                 if pd.notna(item_name) and item_name:
                     item_name_clean = clean_text(str(item_name))
                     data[item_name_clean] = {}
-                    
-                    for col in value_columns:
-                        value = row[col]
+
+                    for col in selected_value_columns:
+                        value = row[col] if col in df.columns else None
                         if pd.notna(value):
                             numeric_value = extract_numbers(str(value))
                             if numeric_value is not None:
-                                data[item_name_clean][col] = numeric_value
-            
-            logger.info(f"Extracted multi-column values for {len(data)} items")
+                                label = header_to_label(col)
+                                data[item_name_clean][label] = numeric_value
+
+            logger.info(f"Extracted multi-column values for {len(data)} items (using columns: {selected_value_columns})")
             return data
-            
+
         except Exception as e:
             logger.error(f"Error extracting multi-column values: {str(e)}")
             return {}

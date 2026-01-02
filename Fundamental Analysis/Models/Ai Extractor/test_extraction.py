@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Test script to demonstrate the extraction system."""
+"""Quick test to see what's in the PDF and why extraction isn't working."""
 
 import sys
 from pathlib import Path
@@ -7,7 +7,103 @@ from pathlib import Path
 # Add current directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.pipeline.extract import ExtractionPipeline
+import pdfplumber
+import pandas as pd
+from src.utils.helpers import extract_numbers
+
+pdf_path = "data/raw/hnb/HNBannual.pdf"
+
+print("="*80)
+print("TESTING PDF EXTRACTION")
+print("="*80)
+
+# Test 1: Find statement pages
+print("\n1. SEARCHING FOR STATEMENT PAGES (pages 10-100)...")
+print("-"*80)
+
+keywords = {
+    'Income Statement': ['income statement', 'profit or loss', 'comprehensive income'],
+    'Financial Position': ['financial position', 'balance sheet'],
+    'Cash Flow': ['cash flow', 'statement of cash flows']
+}
+
+found_pages = {k: [] for k in keywords.keys()}
+
+with pdfplumber.open(pdf_path) as pdf:
+    for page_num in range(10, min(100, len(pdf.pages))):
+        page = pdf.pages[page_num]
+        text = page.extract_text()
+        
+        if text:
+            text_lower = text.lower()
+            for statement, kw_list in keywords.items():
+                if any(kw in text_lower for kw in kw_list):
+                    if page_num not in found_pages[statement]:
+                        found_pages[statement].append(page_num)
+                        print(f"✓ Found '{statement}' on page {page_num + 1}")
+                        # Show first 200 chars
+                        print(f"   Preview: {text[:200]}...")
+                        break
+
+print("\n2. SUMMARY OF FOUND PAGES:")
+print("-"*80)
+for statement, pages in found_pages.items():
+    if pages:
+        print(f"{statement}: Pages {[p+1 for p in pages[:5]]}")
+    else:
+        print(f"{statement}: NOT FOUND!")
+
+# Test 2: Extract tables from first Income Statement page
+print("\n3. EXTRACTING TABLES FROM FIRST PAGES...")
+print("-"*80)
+
+test_pages = []
+for pages in found_pages.values():
+    if pages:
+        test_pages.append(pages[0])
+
+if not test_pages:
+    print("❌ No pages found to test!")
+    sys.exit(1)
+
+test_page = test_pages[0]
+print(f"\nTesting page {test_page + 1}...")
+
+with pdfplumber.open(pdf_path) as pdf:
+    page = pdf.pages[test_page]
+    tables = page.extract_tables()
+    
+    print(f"Found {len(tables)} tables on page {test_page + 1}")
+    
+    for i, table in enumerate(tables[:3]):  # Show first 3 tables
+        print(f"\n--- TABLE {i+1} ---")
+        if table and len(table) > 0:
+            # Convert to DataFrame
+            try:
+                df = pd.DataFrame(table[1:], columns=table[0])
+                print(f"Shape: {df.shape[0]} rows × {df.shape[1]} columns")
+                print(f"Columns: {list(df.columns)}")
+                print("\nFirst 5 rows:")
+                print(df.head(5))
+                
+                # Check for numeric values
+                print("\nChecking for numeric values...")
+                for col_idx, col in enumerate(df.columns):
+                    values = []
+                    for val in df[col].head(5):
+                        num = extract_numbers(str(val))
+                        if num is not None:
+                            values.append(num)
+                    if values:
+                        print(f"  Column {col_idx} ({col}): {values}")
+                
+            except Exception as e:
+                print(f"Error converting to DataFrame: {e}")
+                print(f"Raw table preview: {table[:3]}")
+
+print("\n" + "="*80)
+print("TEST COMPLETE")
+print("="*80)
 from src.utils.logger import setup_logger, get_logger
 import json
 

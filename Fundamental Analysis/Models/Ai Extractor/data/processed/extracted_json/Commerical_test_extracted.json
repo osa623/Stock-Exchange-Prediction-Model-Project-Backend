@@ -1,0 +1,119 @@
+{
+  "extraction_date": "2026-01-03T00:12:29.836441",
+  "extractor_version": "ML-v1.0",
+  "data": {
+    "Bank": {
+      "Year1": {
+        "Income_Statement": {},
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {}
+      },
+      "Year2": {
+        "Income_Statement": {},
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {}
+      }
+    },
+    "Group": {
+      "Year1": {
+        "Income_Statement": {
+          "Net interest income": 18208012.0,
+          "Net fee and commission income": 5205619.0,
+          "Net other operating income": 17722638.0,
+          "Impairment charge/ reversal for loans and other losses": 6640021.0,
+          "Interest expenses": 10313856.0,
+          "Operating profit before taxes on financial services": 7408782.0,
+          "Taxes on financial services": 1071894.0,
+          "Operating profit after taxes on financial services": 6740190.0,
+          "Share of profit of joint venture net of income tax": 1245.0,
+          "PROFIT BEFORE INCOME TAX": 6336888.0,
+          "Income tax expense": 2245815.0,
+          "PROFIT FOR THE YEAR": 20.0
+        },
+        "Financial Position Statement": {
+          "Total assets": 3.02,
+          "Investment in subsidiaries": 2024.0
+        },
+        "Cash Flow Statement": {
+          "Profit before income tax": 31880160.0,
+          "Net capital gain/loss from financial assets measured at fair value through Other comprehensive income": 390.0,
+          "Operating profit before changes in operating assets and liabilities": 177671173.0,
+          "Increase / decrease in operating liabilities": 181162526.0,
+          "Gain on disposal of property plant and equipment": 3167.0,
+          "Dividends received from investment in subsidiaries": 384601.0,
+          "Other liabilities": 5247288.0,
+          "Note Reconciliation of operating profit before changes in operating assets and liabilities": 11086172.0,
+          "Payments to employees": 601335.0,
+          "Income tax paid": 24526988.0,
+          "Net cash used in/generated from operating activities": 39993982.0,
+          "Purchase of property plant and equipment": 370.0,
+          "Proceeds from the sale of property plant and equipment": 15092.0,
+          "Net proceeds from sale maturity and purchase of financial investments": 354.0,
+          "Net purchase of intangible assets": 1115994.0,
+          "Net cash used in from investing activities": 2231120.0,
+          "Financial assets measured at amortized cost loans and advances to customers": 365.0,
+          "Depreciation of investment property b": 382.0,
+          "Accrual for other payables": 392.0
+        }
+      },
+      "Year2": {
+        "Income_Statement": {
+          "Net interest income": 83103565.0,
+          "Net fee and commission income": 21558194.0,
+          "Net other operating income": 79485752.0,
+          "Impairment charge/ reversal for loans and other losses": 111186824.0,
+          "Interest expenses": 12756021.0,
+          "Operating profit before taxes on financial services": 36841552.0,
+          "Taxes on financial services": 4961392.0,
+          "Operating profit after taxes on financial services": 33923506.0,
+          "Share of profit of joint venture net of income tax": 3495.0,
+          "PROFIT BEFORE INCOME TAX": 31880160.0,
+          "Income tax expense": 514207.0,
+          "PROFIT FOR THE YEAR": 100.0,
+          "Net gains from financial investments at fair value through other comprehensive income": 597825.0,
+          "Interest income": 159701507.0,
+          "Net gains / losses from trading": 31148729.0,
+          "Other expenses": 133993167.0,
+          "Total operating expenses": 5.15,
+          "Profit attributable to:": 36482939.0,
+          "Equity holders of the Bank": 224974493.0,
+          "Personnel expenses": 13586534.0,
+          "Earnings per share": 9943003.0,
+          "Non-controlling interests": 4503786.0,
+          "Benefits claims and underwriting expenditure": 675776516.0,
+          "Diluted earnings per ordinary share Rs": 167.77
+        },
+        "Financial Position Statement": {
+          "Other assets": 0.0,
+          "Total assets": 13.32,
+          "Financial assets measured at amortized cost loans and advances to customers": 4.01,
+          "Current tax liabilities": 28.48,
+          "Investment properties": 2020.0,
+          "Investment in subsidiaries": 9.96
+        },
+        "Cash Flow Statement": {
+          "Profit before income tax": 95534611.0,
+          "Net capital gain/loss from financial assets measured at fair value through Other comprehensive income": 44.0,
+          "Operating profit before changes in operating assets and liabilities": 233400043.0,
+          "Increase / decrease in operating liabilities": 128849627.0,
+          "Gain on disposal of property plant and equipment": 2197.0,
+          "Dividends received from investment in subsidiaries": 93600.0,
+          "Proceeds from the issue of subordinated debt b": 3105.0,
+          "Other liabilities": 7242090.0,
+          "Note Reconciliation of operating profit before changes in operating assets and liabilities": 10890433.0,
+          "Payments to employees": 255784.0,
+          "Income tax paid": 19558649.0,
+          "Net cash used in/generated from operating activities": 93300877.0,
+          "Purchase of property plant and equipment": 38.0,
+          "Proceeds from the sale of property plant and equipment": 5264.0,
+          "Net proceeds from sale maturity and purchase of financial investments": 31.0,
+          "Net purchase of intangible assets": 1625594.0,
+          "Net cash used in from investing activities": 6273851.0,
+          "Financial assets measured at amortized cost loans and advances to customers": 35.0,
+          "Depreciation of investment property b": 39.0,
+          "Accrual for other payables": 48.0
+        }
+      }
+    }
+  }
+}

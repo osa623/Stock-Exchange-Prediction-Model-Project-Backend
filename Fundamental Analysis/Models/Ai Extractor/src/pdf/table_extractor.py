@@ -51,7 +51,9 @@ class TableExtractor:
                     for i, table in enumerate(page_tables):
                         if table and len(table) > 0:
                             # Convert to DataFrame
-                            df = pd.DataFrame(table[1:], columns=table[0])
+                            # For financial statements, first row is often data, not headers
+                            # Use numeric column indices instead
+                            df = pd.DataFrame(table)
                             
                             # Clean the DataFrame
                             df = self.clean_table(df)
@@ -112,10 +114,13 @@ class TableExtractor:
             
             # Clean text in all cells
             for col in df.columns:
-                if df[col].dtype == 'object':
-                    df[col] = df[col].apply(
-                        lambda x: clean_text(str(x)) if pd.notna(x) else None
-                    )
+                try:
+                    if pd.api.types.is_object_dtype(df[col]):
+                        df[col] = df[col].apply(
+                            lambda x: clean_text(str(x)) if pd.notna(x) else None
+                        )
+                except:
+                    pass
             
             # Remove rows where all values are None or empty strings
             df = df[df.apply(lambda row: row.notna().any(), axis=1)]

@@ -90,8 +90,7 @@ class ExtractionPipeline:
     ) -> Dict[str, Dict[str, Dict[str, Any]]]:
         """
         Extract data from statement pages with Bank/Group and Year1/Year2.
-        PRIORITY: Extract GROUP data as requested by user.
-        SPECIAL: For HNB format, extracts field names from page text and values from tables.
+        Uses TEXT-BASED extraction because HNB PDF tables miss the 4th column.
         """
         logger.info(f"\n📊 EXTRACTING: {statement_name}")
         logger.info(f"   Pages: {[p+1 for p in pages]} | Target: {len(statement_fields)} fields")
@@ -107,89 +106,80 @@ class ExtractionPipeline:
         for idx, page_num in enumerate(pages, 1):
             logger.info(f"\n   📄 Page {page_num + 1} [{idx}/{len(pages)}]...")
             
-            # Extract text to get field names
-            page_text = pdf_loader.extract_text_pdfplumber(page_num)
-            lines = [l.strip() for l in page_text.split('\n') if l.strip()]
-            
-            # Extract tables from page
-            tables = self.table_extractor.extract_tables_pdfplumber(pdf_path, page_num)
-            
-            if not tables or len(tables) == 0:
-                logger.info(f"      No tables found")
-                continue
-            
-            # Process each table
-            for table_idx, table_df in enumerate(tables):
-                logger.info(f"      📊 Table {table_idx + 1}: {table_df.shape[0]}×{table_df.shape[1]}")
+            try:
+                # Extract text
+                page_text = pdf_loader.extract_text_pdfplumber(page_num)
+                lines = page_text.split('\n')
                 
-                # Skip small tables
-                if table_df.shape[0] < 5 or table_df.shape[1] < 3:
-                    logger.info(f"         Skipping (too small - need at least 5 rows × 3 columns)")
-                    continue
-                
-                # For HNB: Table has 3-4 numeric columns: [Bank 2024, Bank 2023, Group 2024, (Group 2023)]
-                # Field names are in the page text, need to match by position
-                
-                # Detect column structure
-                column_map = self._detect_column_mapping(table_df.columns.tolist(), table_df)
-                
-                if not column_map:
-                    logger.debug(f"         Could not map columns")
-                    continue
-                
-                logger.debug(f"         Column mapping: {column_map}")
-                
-                # Extract data row by row
-                for row_idx in range(len(table_df)):
-                    try:
-                        row = table_df.iloc[row_idx]
-                        
-                        # Try to find matching field name in text
-                        # The text line corresponding to this row should contain the field name
-                        field_name = None
-                        if row_idx + 4 < len(lines):  # +4 offset for header lines
-                            line_text = lines[row_idx + 4]
-                            # Extract field name (before the numbers)
-                            parts = line_text.split()
-                            if parts:
-                                # Take the non-numeric part as field name
-                                field_parts = []
-                                for part in parts:
-                                    if not extract_numbers(part):
-                                        field_parts.append(part)
-                                    else:
-                                        break  # Stop at first number
-                                field_name = ' '.join(field_parts) if field_parts else None
-                        
-                        if not field_name or len(field_name) < 3:
+                # Parse line by line for HNB format
+                # Format: Field_Name Note# Bank2024 Bank2023 Group2024 Group2023
+                for line in lines:
+                    line = line.strip()
+                    if not line or len(line) < 10:
+                        continue
+                    
+                    # Extract all numbers and field name
+                    parts = line.split()
+                    numbers = []
+                    field_parts = []
+                    found_first_number = False
+                    
+                    for part in parts:
+                        # Handle dash as zero
+                        if part == '-' and found_first_number:
+                            numbers.append(0.0)
                             continue
                         
-                        # Match to schema field
+                        num = extract_numbers(part)
+                        if num is not None and abs(num) > 10:  # Valid financial value
+                            numbers.append(num)
+                            found_first_number = True
+                        elif not found_first_number:
+                            # Before numbers = field name
+                            field_parts.append(part)
+                    
+                    # Filter out note numbers: if first number is < 10000 and we have 5+ numbers,
+                    # the first one is likely a note number
+                    if len(numbers) >= 5 and numbers[0] < 10000:
+                        numbers = numbers[1:]  # Remove note number
+                    
+                    # If we have exactly 4 numbers, this is a complete data row
+                    if len(numbers) == 4:
+                        field_name = ' '.join(field_parts).strip()
+                        
+                        # Clean field name
+                        field_name = re.sub(r'\d+$', '', field_name)  # Remove trailing note numbers
+                        field_name = re.sub(r'^Note\s+', '', field_name, flags=re.IGNORECASE)
+                        field_name = field_name.strip()
+                        
+                        if len(field_name) < 3:
+                            continue
+                        
+                        # Match to schema
                         matched_field = self._match_field(field_name, statement_fields)
                         
                         if matched_field:
-                            # Extract values from mapped columns
-                            for col_idx, (entity, year) in column_map.items():
-                                if col_idx < len(row):
-                                    value_str = str(row.iloc[col_idx])
-                                    value = extract_numbers(value_str)
-                                    
-                                    # Validate value
-                                    if value is not None and self._is_valid_financial_value(value):
-                                        if matched_field not in result[entity][year]:
-                                            result[entity][year][matched_field] = value
-                                            total_extracted += 1
-                                            logger.debug(f"            ✓ {matched_field[:30]}... = {value:,.0f} ({entity} {year})")
-                    
-                    except Exception as row_error:
-                        logger.debug(f"         Error processing row {row_idx}: {row_error}")
-                        continue
+                            # Map the 4 values: Bank Y1, Bank Y2, Group Y1, Group Y2
+                            if matched_field not in result['Bank']['Year1']:
+                                result['Bank']['Year1'][matched_field] = numbers[0]
+                                total_extracted += 1
+                            if matched_field not in result['Bank']['Year2']:
+                                result['Bank']['Year2'][matched_field] = numbers[1]
+                                total_extracted += 1
+                            if matched_field not in result['Group']['Year1']:
+                                result['Group']['Year1'][matched_field] = numbers[2]
+                                total_extracted += 1
+                            if matched_field not in result['Group']['Year2']:
+                                result['Group']['Year2'][matched_field] = numbers[3]
+                                total_extracted += 1
+                            
+                            logger.debug(f"      ✓ {matched_field[:40]}... = [B24:{numbers[0]:.0f}, B23:{numbers[1]:.0f}, G24:{numbers[2]:.0f}, G23:{numbers[3]:.0f}]")
                 
-                extracted_count = sum(len(result[e][y]) for e in ['Bank', 'Group'] for y in ['Year1', 'Year2'])
-                if extracted_count > 0:
-                    logger.info(f"         ✓ Extracted {extracted_count} values from this table")
+            except Exception as e:
+                logger.error(f"      Error extracting from page: {str(e)}")
+                continue
         
-        # Log extraction summary for this statement
+        # Log extraction summary
         bank_y1 = len(result['Bank']['Year1'])
         bank_y2 = len(result['Bank']['Year2'])
         group_y1 = len(result['Group']['Year1'])

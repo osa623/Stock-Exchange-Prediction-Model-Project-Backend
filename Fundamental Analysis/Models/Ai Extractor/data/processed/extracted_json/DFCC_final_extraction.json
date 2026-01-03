@@ -1,0 +1,151 @@
+{
+  "pdf_path": "data\\raw\\dfcc\\DFCC.pdf",
+  "timestamp": "2026-01-03T13:38:20.811833",
+  "stage_a_results": {
+    "Income_Statement": [
+      {
+        "page_range": [
+          225,
+          226
+        ],
+        "confidence": 0.99,
+        "evidence": [
+          "From Contents: Income Statement at page 224",
+          "Layout analysis confirms (score: 0.69)"
+        ],
+        "sources": [
+          "toc",
+          "layout_analysis"
+        ]
+      }
+    ],
+    "Financial Position Statement": [
+      {
+        "page_range": [
+          222,
+          223
+        ],
+        "confidence": 0.99,
+        "evidence": [
+          "From Contents: Financial Position at page 226"
+        ],
+        "sources": [
+          "toc"
+        ]
+      }
+    ],
+    "Cash Flow Statement": [
+      {
+        "page_range": [
+          233,
+          234
+        ],
+        "confidence": 0.99,
+        "evidence": [
+          "From Contents: Cash Flow at page 232",
+          "Layout analysis confirms (score: 0.66)"
+        ],
+        "sources": [
+          "toc",
+          "layout_analysis"
+        ]
+      }
+    ]
+  },
+  "stage_b_results": {
+    "Income_Statement": {
+      "statement_type": "Income_Statement",
+      "page_range": [
+        225,
+        226
+      ],
+      "status": "STUB",
+      "data": {}
+    },
+    "Financial Position Statement": {
+      "statement_type": "Financial Position Statement",
+      "page_range": [
+        222,
+        223
+      ],
+      "status": "STUB",
+      "data": {}
+    },
+    "Cash Flow Statement": {
+      "statement_type": "Cash Flow Statement",
+      "page_range": [
+        233,
+        234
+      ],
+      "status": "STUB",
+      "data": {}
+    }
+  },
+  "canonical_output": {
+    "Bank": {
+      "Year1": {
+        "Income_Statement": {},
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {}
+      },
+      "Year2": {
+        "Income_Statement": {},
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {}
+      }
+    },
+    "Group": {
+      "Year1": {
+        "Income_Statement": {},
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {}
+      },
+      "Year2": {
+        "Income_Statement": {},
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {}
+      }
+    },
+    "_metadata": {
+      "extraction_timestamp": null,
+      "schema_version": "1.0"
+    }
+  },
+  "review_payload": {
+    "review_required": false,
+    "confidence_summary": {
+      "overall": 0.0,
+      "by_statement": {}
+    },
+    "validation_summary": {
+      "needs_review": false,
+      "validation_passed": true,
+      "warnings": []
+    },
+    "statement_details": {
+      "Income_Statement": {
+        "pages_used": null,
+        "location_confidence": null,
+        "extraction_status": "STUB"
+      },
+      "Financial Position Statement": {
+        "pages_used": null,
+        "location_confidence": null,
+        "extraction_status": "STUB"
+      },
+      "Cash Flow Statement": {
+        "pages_used": null,
+        "location_confidence": null,
+        "extraction_status": "STUB"
+      }
+    },
+    "mapping_decisions": [],
+    "extraction_warnings": []
+  },
+  "overall_status": "SUCCESS",
+  "validation_results": {
+    "needs_review": false,
+    "validation_passed": true,
+    "warnings": []
+  }
+}

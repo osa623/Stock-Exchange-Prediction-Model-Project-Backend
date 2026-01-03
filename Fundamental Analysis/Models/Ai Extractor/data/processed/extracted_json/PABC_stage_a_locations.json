@@ -1,0 +1,55 @@
+{
+  "Income_Statement": [
+    {
+      "statement_type": "Income_Statement",
+      "page_range": [
+        157,
+        158
+      ],
+      "confidence": 0.9155,
+      "evidence": [
+        "Heading found: 'Statement of Comprehensive Income'",
+        "Layout analysis confirms (score: 0.77)"
+      ],
+      "sources": [
+        "heading_scan",
+        "layout_analysis"
+      ],
+      "metadata": {}
+    }
+  ],
+  "Financial Position Statement": [
+    {
+      "statement_type": "Financial Position Statement",
+      "page_range": [
+        152,
+        153
+      ],
+      "confidence": 0.98,
+      "evidence": [
+        "From Contents: Financial Position at page 156"
+      ],
+      "sources": [
+        "toc"
+      ],
+      "metadata": {}
+    }
+  ],
+  "Cash Flow Statement": [
+    {
+      "statement_type": "Cash Flow Statement",
+      "page_range": [
+        153,
+        154
+      ],
+      "confidence": 0.98,
+      "evidence": [
+        "From Contents: Cash Flow at page 158"
+      ],
+      "sources": [
+        "toc"
+      ],
+      "metadata": {}
+    }
+  ]
+}

@@ -167,7 +167,7 @@ class TOCDetector:
     def _find_actual_page(self, pdf, reported_page: int, keywords: List[str]) -> int:
         """
         Find the actual PDF page index from a reported page number.
-        Checks reported_page +/- 2 for matching content.
+        Looks for pages with keywords AND data indicators (years, currency).
         
         Args:
             pdf: PDF object
@@ -177,25 +177,64 @@ class TOCDetector:
         Returns:
             PDF page index (0-based) or None
         """
-        # Try the reported page first (most PDFs use 0-based indexing, so page 159 = index 158)
-        # But some use 1-based, so we check nearby
-        for offset in [0, -1, -2, 1, 2]:
+        # Try offsets to find the actual data page, not just title pages
+        # Check larger offsets first since many PDFs have title pages before data
+        for offset in [1, 2, 3, 4, 0, -1, 5, 6, 7, -2]:
             pdf_page_idx = reported_page + offset - 1  # Convert to 0-based index
             
             if 0 <= pdf_page_idx < len(pdf.pages):
                 try:
                     page = pdf.pages[pdf_page_idx]
-                    text = (page.extract_text() or "").lower()[:1500]
+                    text = (page.extract_text() or "").lower()
                     
-                    # Check if any keyword appears
-                    if any(keyword in text for keyword in keywords):
-                        return pdf_page_idx
+                    # Check if keywords appear
+                    has_keywords = any(keyword in text for keyword in keywords)
+                    
+                    if has_keywords:
+                        # MUST have data indicators to qualify
+                        # This prevents matching title pages
+                        has_both_years = "2024" in text and "2023" in text
+                        has_currency = "rs '000" in text or "rs. '000" in text or "rs '0" in text
+                        
+                        # Statement-specific data indicators
+                        statement_indicators = {
+                            'income': any([
+                                "gross income" in text,
+                                "interest income" in text,
+                                "net interest" in text
+                            ]),
+                            'position': any([
+                                "assets" in text and "liabilities" in text,
+                                "cash and cash" in text,
+                                "deposits" in text and "customers" in text
+                            ]),
+                            'balance': any([
+                                "assets" in text and "liabilities" in text,
+                                "cash and cash" in text
+                            ]),
+                            'cash': any([
+                                "cash flows from operating" in text,
+                                "operating activities" in text,
+                                "financing activities" in text
+                            ])
+                        }
+                        
+                        # Check for statement-specific indicators
+                        # Match keywords containing indicator keys (e.g., 'financial position' contains 'position')
+                        has_statement_data = False
+                        for keyword in keywords:
+                            for indicator_key, indicator_check in statement_indicators.items():
+                                if indicator_key in keyword:
+                                    has_statement_data = indicator_check
+                                    break
+                            if has_statement_data:
+                                break
+                        
+                        # Need both years AND (currency OR statement-specific data)
+                        if has_both_years and (has_currency or has_statement_data):
+                            return pdf_page_idx
                 except:
                     continue
         
-        # If not found, return the reported page as best guess (0-indexed)
-        guess = reported_page - 1
-        if 0 <= guess < len(pdf.pages):
-            return guess
-        
+        # If no page with data found, return None (don't guess)
         return None

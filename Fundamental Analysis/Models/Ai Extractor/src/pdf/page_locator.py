@@ -79,8 +79,8 @@ class PageLocator:
             
             # Locate Balance Sheet
             balance_pages = self.find_section_pages(
-                keywords.BALANCE_SHEET_KEYWORDS,
-                "Balance Sheet"
+                keywords.FINANCIAL_POSITION_KEYWORDS,
+                "Financial Position Statement"
             )
             if balance_pages:
                 sections['balance_sheet'] = balance_pages

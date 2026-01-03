@@ -1,0 +1,406 @@
+{
+  "pdf_path": "data\\raw\\pabc\\pabc.pdf",
+  "timestamp": "2026-01-03T17:08:28.699128",
+  "stage_a_results": {
+    "Income_Statement": [
+      {
+        "page_range": [
+          157,
+          158
+        ],
+        "confidence": 0.98,
+        "evidence": [
+          "From Contents: Income Statement at page 156",
+          "Layout analysis confirms (score: 0.77)"
+        ],
+        "sources": [
+          "toc",
+          "layout_analysis"
+        ]
+      }
+    ],
+    "Financial Position Statement": [
+      {
+        "page_range": [
+          155,
+          156
+        ],
+        "confidence": 0.98,
+        "evidence": [
+          "From Contents: Financial Position at page 156"
+        ],
+        "sources": [
+          "toc"
+        ]
+      }
+    ],
+    "Cash Flow Statement": [
+      {
+        "page_range": [
+          157,
+          158
+        ],
+        "confidence": 0.98,
+        "evidence": [
+          "From Contents: Cash Flow at page 158",
+          "Layout analysis confirms (score: 0.77)"
+        ],
+        "sources": [
+          "toc",
+          "layout_analysis"
+        ]
+      }
+    ]
+  },
+  "stage_b_results": {
+    "Income_Statement": {
+      "rows": [
+        {
+          "original_label": "Gross Income",
+          "canonical_label": "Gross income",
+          "confidence": 1.0,
+          "values": {
+            "Unknown_Unknown": 6.0,
+            "Bank_2024": 28831598.0,
+            "Bank_2023": 38971229.0
+          }
+        },
+        {
+          "original_label": "Interest Income",
+          "canonical_label": "Interest income",
+          "confidence": 1.0,
+          "values": {
+            "Bank_2024": 30781725.0,
+            "Bank_2023": 37122997.0
+          }
+        },
+        {
+          "original_label": "Interest Expense",
+          "canonical_label": "Interest expenses",
+          "confidence": 0.95,
+          "values": {
+            "Unknown_Unknown": null,
+            "Bank_2024": 18645983.0,
+            "Bank_2023": 26820527.0
+          }
+        },
+        {
+          "original_label": "Net Interest Income",
+          "canonical_label": "Net interest income",
+          "confidence": 1.0,
+          "values": {
+            "Unknown_Unknown": 7.0,
+            "Bank_2024": 12135742.0,
+            "Bank_2023": 10302470.0
+          }
+        },
+        {
+          "original_label": "Fee and Commission Income",
+          "canonical_label": "Fee and commission income",
+          "confidence": 1.0,
+          "values": {
+            "Bank_2024": 1906725.0,
+            "Bank_2023": 1539359.0
+          }
+        },
+        {
+          "original_label": "Fee and Commission Expens",
+          "canonical_label": "Fee and commission expenses",
+          "confidence": 0.9615384615384616,
+          "values": {
+            "Unknown_Unknown": null,
+            "Bank_2024": -69579.0,
+            "Bank_2023": 55283.0
+          }
+        },
+        {
+          "original_label": "Net Fee and Commission Inco",
+          "canonical_label": "Net fee and commission income",
+          "confidence": 0.9642857142857143,
+          "values": {
+            "Unknown_Unknown": 8.0,
+            "Bank_2024": 1837146.0,
+            "Bank_2023": 1484076.0
+          }
+        },
+        {
+          "original_label": "Net Gains from Trading",
+          "canonical_label": "Net gains / losses from trading",
+          "confidence": 0.95,
+          "values": {
+            "Unknown_Unknown": 9.0,
+            "Bank_2024": 753368.0,
+            "Bank_2023": 910210.0
+          }
+        },
+        {
+          "original_label": "Total Operating Income",
+          "canonical_label": "Total operating income",
+          "confidence": 1.0,
+          "values": {
+            "Bank_2024": 13816402.0,
+            "Bank_2023": 12095419.0
+          }
+        },
+        {
+          "original_label": "Net Operating Income",
+          "canonical_label": "Net operating income",
+          "confidence": 1.0,
+          "values": {
+            "Bank_2024": 15177249.0,
+            "Bank_2023": 9380750.0
+          }
+        },
+        {
+          "original_label": "Personnel Expenses",
+          "canonical_label": "Personnel expenses",
+          "confidence": 1.0,
+          "values": {
+            "Unknown_Unknown": 15.0,
+            "Bank_2024": 3507771.0,
+            "Bank_2023": 2660113.0
+          }
+        },
+        {
+          "original_label": "Other Operating Expenses",
+          "canonical_label": "Other expenses",
+          "confidence": 0.95,
+          "values": {
+            "Unknown_Unknown": 17.0,
+            "Bank_2024": 3231028.0,
+            "Bank_2023": 2881835.0
+          }
+        },
+        {
+          "original_label": "Total Operating Expenses",
+          "canonical_label": "Total operating expenses",
+          "confidence": 1.0,
+          "values": {
+            "Bank_2024": 7279008.0,
+            "Bank_2023": 6055081.0
+          }
+        },
+        {
+          "original_label": "Operating Profit Before Taxes",
+          "canonical_label": "Operating profit before taxes on financial services",
+          "confidence": 0.8928571428571429,
+          "values": {
+            "Unknown_Unknown": null,
+            "Bank_2024": 7898241.0,
+            "Bank_2023": 3325669.0
+          }
+        },
+        {
+          "original_label": "Profit Before Tax",
+          "canonical_label": "PROFIT BEFORE INCOME TAX",
+          "confidence": 0.95,
+          "values": {
+            "Bank_2024": 6027509.0,
+            "Bank_2023": 2328346.0
+          }
+        },
+        {
+          "original_label": "Income Tax Expense",
+          "canonical_label": "Income tax expense",
+          "confidence": 1.0,
+          "values": {
+            "Unknown_Unknown": 19.0,
+            "Bank_2024": 1892793.0,
+            "Bank_2023": 473381.0
+          }
+        },
+        {
+          "original_label": "Profit for the Year",
+          "canonical_label": "PROFIT FOR THE YEAR",
+          "confidence": 1.0,
+          "values": {
+            "Bank_2024": 4134716.0,
+            "Bank_2023": 1854965.0
+          }
+        },
+        {
+          "original_label": "Dividend Per Share (Rs.)",
+          "canonical_label": "Dividend per share",
+          "confidence": 0.8571428571428572,
+          "values": {
+            "Unknown_Unknown": null,
+            "Bank_2024": 1.0,
+            "Bank_2023": 0.25
+          }
+        }
+      ],
+      "column_info": {
+        "entity_cols": {
+          "4": "Bank",
+          "5": "Bank"
+        },
+        "year_cols": {
+          "4": 2024,
+          "5": 2023
+        }
+      },
+      "table_count": 2,
+      "page_range": [
+        157,
+        158
+      ]
+    },
+    "Financial Position Statement": {
+      "rows": [],
+      "column_info": {
+        "entity_cols": {
+          "2": "Bank"
+        },
+        "year_cols": {
+          "2": 2024
+        }
+      },
+      "table_count": 2,
+      "page_range": [
+        155,
+        156
+      ]
+    },
+    "Cash Flow Statement": {
+      "rows": [
+        {
+          "original_label": "Profit Before Tax",
+          "canonical_label": "Profit before income tax",
+          "confidence": 0.95,
+          "values": {
+            "Bank_2024": 6027509.0,
+            "Bank_2023": 2328346.0
+          }
+        }
+      ],
+      "column_info": {
+        "entity_cols": {
+          "4": "Bank",
+          "5": "Bank"
+        },
+        "year_cols": {
+          "4": 2024,
+          "5": 2023
+        }
+      },
+      "table_count": 2,
+      "page_range": [
+        157,
+        158
+      ]
+    }
+  },
+  "canonical_output": {
+    "Bank": {
+      "Year1": {
+        "Income_Statement": {
+          "Gross income": 28831598.0,
+          "Interest income": 30781725.0,
+          "Interest expenses": 18645983.0,
+          "Net interest income": 12135742.0,
+          "Fee and commission income": 1906725.0,
+          "Fee and commission expenses": -69579.0,
+          "Net fee and commission income": 1837146.0,
+          "Net gains / losses from trading": 753368.0,
+          "Total operating income": 13816402.0,
+          "Net operating income": 15177249.0,
+          "Personnel expenses": 3507771.0,
+          "Other expenses": 3231028.0,
+          "Total operating expenses": 7279008.0,
+          "Operating profit before taxes on financial services": 7898241.0,
+          "PROFIT BEFORE INCOME TAX": 6027509.0,
+          "Income tax expense": 1892793.0,
+          "PROFIT FOR THE YEAR": 4134716.0,
+          "Dividend per share": 1.0
+        },
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {
+          "Profit before income tax": 6027509.0
+        }
+      },
+      "Year2": {
+        "Income_Statement": {
+          "Gross income": 38971229.0,
+          "Interest income": 37122997.0,
+          "Interest expenses": 26820527.0,
+          "Net interest income": 10302470.0,
+          "Fee and commission income": 1539359.0,
+          "Fee and commission expenses": 55283.0,
+          "Net fee and commission income": 1484076.0,
+          "Net gains / losses from trading": 910210.0,
+          "Total operating income": 12095419.0,
+          "Net operating income": 9380750.0,
+          "Personnel expenses": 2660113.0,
+          "Other expenses": 2881835.0,
+          "Total operating expenses": 6055081.0,
+          "Operating profit before taxes on financial services": 3325669.0,
+          "PROFIT BEFORE INCOME TAX": 2328346.0,
+          "Income tax expense": 473381.0,
+          "PROFIT FOR THE YEAR": 1854965.0,
+          "Dividend per share": 0.25
+        },
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {
+          "Profit before income tax": 2328346.0
+        }
+      }
+    },
+    "Group": {
+      "Year1": {
+        "Income_Statement": {},
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {}
+      },
+      "Year2": {
+        "Income_Statement": {},
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {}
+      }
+    },
+    "_metadata": {
+      "extraction_timestamp": "2026-01-03T17:09:11.675274",
+      "schema_version": "1.0",
+      "year_mapping": {
+        "2023": "Year2",
+        "2024": "Year1"
+      }
+    }
+  },
+  "review_payload": {
+    "review_required": false,
+    "confidence_summary": {
+      "overall": 0.0,
+      "by_statement": {}
+    },
+    "validation_summary": {
+      "needs_review": false,
+      "validation_passed": true,
+      "warnings": []
+    },
+    "statement_details": {
+      "Income_Statement": {
+        "pages_used": null,
+        "location_confidence": null,
+        "extraction_status": "PENDING"
+      },
+      "Financial Position Statement": {
+        "pages_used": null,
+        "location_confidence": null,
+        "extraction_status": "PENDING"
+      },
+      "Cash Flow Statement": {
+        "pages_used": null,
+        "location_confidence": null,
+        "extraction_status": "PENDING"
+      }
+    },
+    "mapping_decisions": [],
+    "extraction_warnings": []
+  },
+  "overall_status": "SUCCESS",
+  "validation_results": {
+    "needs_review": false,
+    "validation_passed": true,
+    "warnings": []
+  }
+}

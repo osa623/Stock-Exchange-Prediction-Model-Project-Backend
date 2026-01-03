@@ -59,7 +59,7 @@ class MLFinancialExtractor:
                 "income statement note"
             ],
             "Financial Position Statement": [
-                "statement of financial position", "balance sheet",
+                "statement of financial position",
                 "assets and liabilities", "financial position note"
             ],
             "Cash Flow Statement": [

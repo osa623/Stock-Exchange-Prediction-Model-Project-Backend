@@ -93,7 +93,7 @@ class TOCDetector:
             if nums_before:
                 page_num = int(nums_before[-1])
                 if 150 <= page_num <= 500:
-                    pdf_page = self._find_actual_page(pdf, page_num, ['financial position', 'balance sheet'])
+                    pdf_page = self._find_actual_page(pdf, page_num, ['financial position','statement of financial position'])
                     if pdf_page is not None:
                         results['Financial Position Statement'].append({
                             'page_range': [pdf_page, pdf_page + 1],
@@ -109,7 +109,7 @@ class TOCDetector:
                 if match:
                     page_num = int(match.group(1))
                     if 150 <= page_num <= 500:
-                        pdf_page = self._find_actual_page(pdf, page_num, ['financial position', 'balance sheet'])
+                        pdf_page = self._find_actual_page(pdf, page_num, ['financial position'])
                         if pdf_page is not None:
                             results['Financial Position Statement'].append({
                                 'page_range': [pdf_page, pdf_page + 1],

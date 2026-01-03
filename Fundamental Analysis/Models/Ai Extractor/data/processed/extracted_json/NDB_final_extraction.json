@@ -1,0 +1,155 @@
+{
+  "pdf_path": "data\\raw\\ndb\\NDB.pdf",
+  "timestamp": "2026-01-03T15:59:55.317369",
+  "stage_a_results": {
+    "Income_Statement": [
+      {
+        "page_range": [
+          264,
+          266
+        ],
+        "confidence": 0.99,
+        "evidence": [
+          "Heading found: 'STATEMENT OF PROFIT OR LOSS'",
+          "Heading found: 'STATEMENT OF COMPREHENSIVE INCOME'",
+          "Layout analysis confirms (score: 0.97)"
+        ],
+        "sources": [
+          "heading_scan",
+          "layout_analysis"
+        ]
+      }
+    ],
+    "Financial Position Statement": [
+      {
+        "page_range": [
+          266,
+          267
+        ],
+        "confidence": 0.99,
+        "evidence": [
+          "Heading found: 'STATEMENT OF FINANCIAL POSITION'",
+          "Layout analysis confirms (score: 0.97)"
+        ],
+        "sources": [
+          "heading_scan",
+          "layout_analysis"
+        ]
+      }
+    ],
+    "Cash Flow Statement": [
+      {
+        "page_range": [
+          269,
+          271
+        ],
+        "confidence": 0.99,
+        "evidence": [
+          "Heading found: 'STATEMENT OF CASH FLOWS'",
+          "Heading found: 'STATEMENT OF CASH FLOWS FINANCIAL STATEMENTS 269'",
+          "Layout analysis confirms (score: 0.94)"
+        ],
+        "sources": [
+          "heading_scan",
+          "layout_analysis"
+        ]
+      }
+    ]
+  },
+  "stage_b_results": {
+    "Income_Statement": {
+      "statement_type": "Income_Statement",
+      "page_range": [
+        264,
+        266
+      ],
+      "status": "STUB",
+      "data": {}
+    },
+    "Financial Position Statement": {
+      "statement_type": "Financial Position Statement",
+      "page_range": [
+        266,
+        267
+      ],
+      "status": "STUB",
+      "data": {}
+    },
+    "Cash Flow Statement": {
+      "statement_type": "Cash Flow Statement",
+      "page_range": [
+        269,
+        271
+      ],
+      "status": "STUB",
+      "data": {}
+    }
+  },
+  "canonical_output": {
+    "Bank": {
+      "Year1": {
+        "Income_Statement": {},
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {}
+      },
+      "Year2": {
+        "Income_Statement": {},
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {}
+      }
+    },
+    "Group": {
+      "Year1": {
+        "Income_Statement": {},
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {}
+      },
+      "Year2": {
+        "Income_Statement": {},
+        "Financial Position Statement": {},
+        "Cash Flow Statement": {}
+      }
+    },
+    "_metadata": {
+      "extraction_timestamp": null,
+      "schema_version": "1.0"
+    }
+  },
+  "review_payload": {
+    "review_required": false,
+    "confidence_summary": {
+      "overall": 0.0,
+      "by_statement": {}
+    },
+    "validation_summary": {
+      "needs_review": false,
+      "validation_passed": true,
+      "warnings": []
+    },
+    "statement_details": {
+      "Income_Statement": {
+        "pages_used": null,
+        "location_confidence": null,
+        "extraction_status": "STUB"
+      },
+      "Financial Position Statement": {
+        "pages_used": null,
+        "location_confidence": null,
+        "extraction_status": "STUB"
+      },
+      "Cash Flow Statement": {
+        "pages_used": null,
+        "location_confidence": null,
+        "extraction_status": "STUB"
+      }
+    },
+    "mapping_decisions": [],
+    "extraction_warnings": []
+  },
+  "overall_status": "SUCCESS",
+  "validation_results": {
+    "needs_review": false,
+    "validation_passed": true,
+    "warnings": []
+  }
+}

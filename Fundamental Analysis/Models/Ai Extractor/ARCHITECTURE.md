@@ -252,7 +252,7 @@ The canonical output matches the schema defined in `config/target_schema_bank.py
 
 - **Three mandatory statements**:
   - Income Statement
-  - Financial Position Statement (Balance Sheet)
+  - Financial Position Statement
   - Cash Flow Statement
 
 - **Four perspectives** (Bank/Group × Year1/Year2):

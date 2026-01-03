@@ -26,13 +26,13 @@ class HeadingScanner:
         # Import keywords from config
         from config.keywords import (
             INCOME_STATEMENT_KEYWORDS,
-            BALANCE_SHEET_KEYWORDS,
+            FINANCIAL_POSITION_KEYWORDS,
             CASH_FLOW_KEYWORDS
         )
         
         self.statement_keywords = {
             'Income_Statement': INCOME_STATEMENT_KEYWORDS,
-            'Financial Position Statement': BALANCE_SHEET_KEYWORDS,
+            'Financial Position Statement': FINANCIAL_POSITION_KEYWORDS,
             'Cash Flow Statement': CASH_FLOW_KEYWORDS
         }
         
@@ -82,7 +82,6 @@ class HeadingScanner:
             'statement of profit',
             'statement of comprehensive income',
             'statement of financial position',
-            'balance sheet',
             'statement of cash flow',
             'cash flow statement'
         ]

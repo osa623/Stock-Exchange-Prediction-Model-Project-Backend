@@ -27,7 +27,7 @@ class DocumentClassifier:
         },
         "Financial_Position_Statement": {
             "primary_keywords": [
-                "statement of financial position", "balance sheet",
+                "statement of financial position",
                 "statement of position", "financial position"
             ],
             "secondary_keywords": [

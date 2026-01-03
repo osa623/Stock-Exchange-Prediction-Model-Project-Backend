@@ -1,33 +1,31 @@
 {
-  "pdf_path": "data\\raw\\pabc\\pabc.pdf",
-  "timestamp": "2026-01-03T13:50:26.061098",
+  "pdf_path": "data\\raw\\commercial\\Commerical.pdf",
+  "timestamp": "2026-01-03T13:53:14.498485",
   "stage_a_results": {
     "Income_Statement": [
       {
         "page_range": [
-          150,
-          151
+          294,
+          295
         ],
-        "confidence": 0.98,
+        "confidence": 0.99,
         "evidence": [
-          "From Contents: Income Statement at page 151",
-          "Layout analysis confirms (score: 0.74)"
+          "From Contents: Income Statement at page 295"
         ],
         "sources": [
-          "toc",
-          "layout_analysis"
+          "toc"
         ]
       }
     ],
     "Financial Position Statement": [
       {
         "page_range": [
-          155,
-          156
+          294,
+          295
         ],
-        "confidence": 0.98,
+        "confidence": 0.99,
         "evidence": [
-          "From Contents: Financial Position at page 156"
+          "From Contents: Financial Position at page 297"
         ],
         "sources": [
           "toc"
@@ -37,17 +35,15 @@
     "Cash Flow Statement": [
       {
         "page_range": [
-          157,
-          158
+          305,
+          306
         ],
-        "confidence": 0.98,
+        "confidence": 0.99,
         "evidence": [
-          "From Contents: Cash Flow at page 158",
-          "Layout analysis confirms (score: 0.77)"
+          "From Contents: Cash Flow at page 306"
         ],
         "sources": [
-          "toc",
-          "layout_analysis"
+          "toc"
         ]
       }
     ]
@@ -56,8 +52,8 @@
     "Income_Statement": {
       "statement_type": "Income_Statement",
       "page_range": [
-        150,
-        151
+        294,
+        295
       ],
       "status": "STUB",
       "data": {}
@@ -65,8 +61,8 @@
     "Financial Position Statement": {
       "statement_type": "Financial Position Statement",
       "page_range": [
-        155,
-        156
+        294,
+        295
       ],
       "status": "STUB",
       "data": {}
@@ -74,8 +70,8 @@
     "Cash Flow Statement": {
       "statement_type": "Cash Flow Statement",
       "page_range": [
-        157,
-        158
+        305,
+        306
       ],
       "status": "STUB",
       "data": {}

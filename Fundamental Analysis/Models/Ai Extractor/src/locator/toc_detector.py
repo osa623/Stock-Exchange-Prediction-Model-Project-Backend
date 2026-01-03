@@ -55,6 +55,9 @@ class TOCDetector:
             r'(\d{3})\s+Income\s+Statement',  # "295 Income Statement"
             r'Income\s+Statement\s+(\d{3})',  # "Income Statement 295"
             r'(\d{3})\s+Statement\s+of\s+Profit',  # "225 Statement of Profit"
+            r'Statement\s+of\s+Profit\s+(?:or\s+Loss|and\s+Loss).*?(\d{3})',  # "Statement of Profit or Loss 225"
+            r'(\d{3})\s+Statement\s+of\s+Comprehensive\s+Income',  # "225 Statement of Comprehensive Income"
+            r'Statement\s+of\s+Comprehensive\s+Income\s+(\d{3})',  # "Statement of Comprehensive Income 225"
         ]
         
         for pattern in income_patterns:
@@ -164,7 +167,7 @@ class TOCDetector:
     def _find_actual_page(self, pdf, reported_page: int, keywords: List[str]) -> int:
         """
         Find the actual PDF page index from a reported page number.
-        Checks reported_page +/- 5 for matching content.
+        Checks reported_page +/- 2 for matching content.
         
         Args:
             pdf: PDF object
@@ -174,9 +177,10 @@ class TOCDetector:
         Returns:
             PDF page index (0-based) or None
         """
-        # Try offsets from -5 to +5
-        for offset in range(-5, 6):
-            pdf_page_idx = reported_page + offset
+        # Try the reported page first (most PDFs use 0-based indexing, so page 159 = index 158)
+        # But some use 1-based, so we check nearby
+        for offset in [0, -1, -2, 1, 2]:
+            pdf_page_idx = reported_page + offset - 1  # Convert to 0-based index
             
             if 0 <= pdf_page_idx < len(pdf.pages):
                 try:
@@ -189,8 +193,8 @@ class TOCDetector:
                 except:
                     continue
         
-        # If not found, return best guess (reported_page with small offset)
-        guess = reported_page + 2  # Common offset
+        # If not found, return the reported page as best guess (0-indexed)
+        guess = reported_page - 1
         if 0 <= guess < len(pdf.pages):
             return guess
         

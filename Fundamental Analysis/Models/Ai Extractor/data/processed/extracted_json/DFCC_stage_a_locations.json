@@ -1,0 +1,58 @@
+{
+  "Income_Statement": [
+    {
+      "statement_type": "Income_Statement",
+      "page_range": [
+        225,
+        227
+      ],
+      "confidence": 0.99,
+      "evidence": [
+        "Heading found: 'INCOME STATEMENT'",
+        "Heading found: 'STATEMENT OF PROFIT OR LOSS AND'",
+        "Layout analysis confirms (score: 0.69)"
+      ],
+      "sources": [
+        "heading_scan",
+        "layout_analysis"
+      ],
+      "metadata": {}
+    }
+  ],
+  "Financial Position Statement": [
+    {
+      "statement_type": "Financial Position Statement",
+      "page_range": [
+        315,
+        316
+      ],
+      "confidence": 0.9003500000000001,
+      "evidence": [
+        "Heading found: 'Line item in the statement of financial position 2024 2023'",
+        "Layout analysis confirms (score: 0.79)"
+      ],
+      "sources": [
+        "heading_scan",
+        "layout_analysis"
+      ],
+      "metadata": {}
+    }
+  ],
+  "Cash Flow Statement": [
+    {
+      "statement_type": "Cash Flow Statement",
+      "page_range": [
+        311,
+        312
+      ],
+      "confidence": 0.77,
+      "evidence": [
+        "Heading found: 'Statement of cash flows'"
+      ],
+      "sources": [
+        "heading_scan"
+      ],
+      "metadata": {}
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "Income_Statement": [
+    {
+      "statement_type": "Income_Statement",
+      "page_range": [
+        289,
+        291
+      ],
+      "confidence": 0.99,
+      "evidence": [
+        "Heading found: 'INCOME STATEMENT'",
+        "Heading found: 'STATEMENT OF PROFIT OR LOSS AND'",
+        "Layout analysis confirms (score: 0.87)"
+      ],
+      "sources": [
+        "heading_scan",
+        "layout_analysis"
+      ],
+      "metadata": {}
+    }
+  ],
+  "Financial Position Statement": [
+    {
+      "statement_type": "Financial Position Statement",
+      "page_range": [
+        291,
+        292
+      ],
+      "confidence": 0.99,
+      "evidence": [
+        "Heading found: 'STATEMENT OF FINANCIAL POSITION'",
+        "Layout analysis confirms (score: 0.87)"
+      ],
+      "sources": [
+        "heading_scan",
+        "layout_analysis"
+      ],
+      "metadata": {}
+    }
+  ],
+  "Cash Flow Statement": [
+    {
+      "statement_type": "Cash Flow Statement",
+      "page_range": [
+        297,
+        298
+      ],
+      "confidence": 0.99,
+      "evidence": [
+        "Heading found: 'STATEMENT OF CASH FLOWS'",
+        "Layout analysis confirms (score: 0.86)"
+      ],
+      "sources": [
+        "heading_scan",
+        "layout_analysis"
+      ],
+      "metadata": {}
+    }
+  ]
+}

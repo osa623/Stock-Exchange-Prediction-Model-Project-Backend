@@ -1,0 +1,75 @@
+{
+  "Income_Statement": [
+    {
+      "statement_type": "Income_Statement",
+      "page_range": [
+        298,
+        300
+      ],
+      "confidence": 0.99,
+      "evidence": [
+        "ToC entry: '13 About Commercial Bank of Ceylon PLC 295 Income Statement' (reported page 295, PDF page 299)",
+        "ToC entry: '23 Snapshot of the Bank 296 Statement of Profit or Loss and' (reported page 296, PDF page 300)",
+        "Layout analysis confirms (score: 0.82)"
+      ],
+      "sources": [
+        "toc",
+        "layout_analysis"
+      ],
+      "metadata": {
+        "toc_page": 5,
+        "reported_page": 295,
+        "pdf_page": 298,
+        "offset": 3
+      }
+    }
+  ],
+  "Financial Position Statement": [
+    {
+      "statement_type": "Financial Position Statement",
+      "page_range": [
+        300,
+        301
+      ],
+      "confidence": 0.99,
+      "evidence": [
+        "ToC entry: '25 Non-financial Highlights 297 Statement of Financial Position leveraging its financial stewardship,' (reported page 297, PDF page 301)",
+        "Layout analysis confirms (score: 0.82)"
+      ],
+      "sources": [
+        "toc",
+        "layout_analysis"
+      ],
+      "metadata": {
+        "toc_page": 5,
+        "reported_page": 297,
+        "pdf_page": 300,
+        "offset": 3
+      }
+    }
+  ],
+  "Cash Flow Statement": [
+    {
+      "statement_type": "Cash Flow Statement",
+      "page_range": [
+        309,
+        310
+      ],
+      "confidence": 0.99,
+      "evidence": [
+        "ToC entry: '28 Our Journey over 100 years 306 Statement of Cash Flows centric approach to reinforce its' (reported page 306, PDF page 310)",
+        "Layout analysis confirms (score: 0.94)"
+      ],
+      "sources": [
+        "toc",
+        "layout_analysis"
+      ],
+      "metadata": {
+        "toc_page": 5,
+        "reported_page": 306,
+        "pdf_page": 309,
+        "offset": 3
+      }
+    }
+  ]
+}

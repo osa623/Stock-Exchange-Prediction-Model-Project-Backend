@@ -21,6 +21,7 @@ from src.validation.confidence_score import ConfidenceScorer
 from src.schema.canonical_builder import CanonicalBuilder
 from src.schema.review_payload import ReviewPayloadBuilder
 from src.utils.logger import get_logger
+from src.utils.image_saver import StatementImageSaver
 
 logger = get_logger(__name__)
 
@@ -77,6 +78,11 @@ class TwoStagePipeline:
         self.canonical_builder = CanonicalBuilder()
         self.review_builder = ReviewPayloadBuilder()
         
+        # Image saver
+        self.image_saver = StatementImageSaver(
+            output_base_dir=self.config.get('image_output_dir', 'app/statement_images')
+        )
+        
         logger.info("="*80)
         logger.info("🚀 TWO-STAGE EXTRACTION PIPELINE INITIALIZED")
         logger.info("="*80)
@@ -131,6 +137,20 @@ class TwoStagePipeline:
                 stage_a_path = self._get_output_path(pdf_path, '_stage_a_locations.json')
                 self.page_locator.save_location_results(best_locations, str(stage_a_path))
                 logger.info(f"\n💾 Saved Stage A results to: {stage_a_path}")
+            
+            # ===== SAVE STATEMENT IMAGES =====
+            logger.info(f"\n📷 SAVING STATEMENT PAGE IMAGES")
+            logger.info("-" * 80)
+            
+            try:
+                saved_images = self.image_saver.save_statement_images(
+                    pdf_path=str(pdf_path),
+                    page_locations=best_locations
+                )
+                result['saved_images'] = saved_images
+            except Exception as e:
+                logger.warning(f"Failed to save statement images: {str(e)}")
+                result['saved_images'] = {}
             
             # ===== STAGE B: STRUCTURED EXTRACTION =====
             logger.info(f"\n{'='*80}")

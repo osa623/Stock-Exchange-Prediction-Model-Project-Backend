@@ -23,25 +23,28 @@ class TOCDetector:
     
     def __init__(self):
         """Initialize ToC detector with common patterns."""
-        # Patterns that indicate a ToC page
+
         self.toc_indicators = [
-            r'contents',  # Simple - just look for "contents" anywhere
+            r'CONTENTS',
+            r'contents',
             r'table\s+of\s+contents',
         ]
         
         # Statement titles to look for
         self.statement_patterns = {
             'Income_Statement': [
+                r'INCOME\s+STATEMENT',
                 r'statement\s+of\s+(profit\s+(or\s+)?loss|comprehensive\s+income|income)',
                 r'income\s+statement',
                 r'profit\s+(and|&|or)\s+loss',
             ],
             'Financial Position Statement': [
-                r'statement\s+of\s+financial\s+position',
+                r'STATEMENT\s+OF\s+FINANCIAL\s+POSITION',
                 r'balance\s+sheet',
                 r'statement\s+of\s+assets\s+and\s+liabilities',
             ],
             'Cash Flow Statement': [
+                r'STATEMENT\s+OF\s+CASH\s+FLOWS',
                 r'statement\s+of\s+cash\s+flows?',
                 r'cash\s+flow\s+statement',
             ]
@@ -66,7 +69,7 @@ class TOCDetector:
         toc_pages = []
         
         # Usually ToC is in first 20 pages
-        search_limit = min(20, len(pdf.pages))
+        search_limit = min(10, len(pdf.pages))
         
         for page_num in range(search_limit):
             try:
@@ -98,8 +101,8 @@ class TOCDetector:
         """
         entries = {
             'Income_Statement': [],
-            'Financial Position Statement': [],
-            'Cash Flow Statement': []
+            'Statement of Financial Position': [],
+            'Statement of Cash Flows': []
         }
         
         for toc_page in toc_pages:

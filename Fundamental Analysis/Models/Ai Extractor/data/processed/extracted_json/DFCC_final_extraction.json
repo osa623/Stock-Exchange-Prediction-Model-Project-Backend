@@ -1,21 +1,20 @@
 {
   "pdf_path": "data\\raw\\dfcc\\DFCC.pdf",
-  "timestamp": "2026-01-03T12:11:13.021097",
+  "timestamp": "2026-01-03T12:25:53.445763",
   "stage_a_results": {
     "Income_Statement": [
       {
         "page_range": [
           225,
-          227
+          226
         ],
         "confidence": 0.99,
         "evidence": [
-          "Heading found: 'INCOME STATEMENT'",
-          "Heading found: 'STATEMENT OF PROFIT OR LOSS AND'",
+          "ToC entry: 'and Remuneration Auditors\u2019 Report Assurance Report for Committee Integrated Reporting 224 Income Statement' (reported page 224, PDF page 226)",
           "Layout analysis confirms (score: 0.69)"
         ],
         "sources": [
-          "heading_scan",
+          "toc",
           "layout_analysis"
         ]
       }
@@ -58,7 +57,7 @@
       "statement_type": "Income_Statement",
       "page_range": [
         225,
-        227
+        226
       ],
       "status": "STUB",
       "data": {}

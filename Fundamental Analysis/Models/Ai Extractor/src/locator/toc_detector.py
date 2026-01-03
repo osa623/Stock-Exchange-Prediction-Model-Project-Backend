@@ -25,9 +25,8 @@ class TOCDetector:
         """Initialize ToC detector with common patterns."""
         # Patterns that indicate a ToC page
         self.toc_indicators = [
-            r'^\s*contents\s*$',
+            r'contents',  # Simple - just look for "contents" anywhere
             r'table\s+of\s+contents',
-            r'^\s*index\s*$',
         ]
         
         # Statement titles to look for
@@ -109,63 +108,65 @@ class TOCDetector:
                 text = page.extract_text() or ""
                 lines = text.split('\n')
                 
-                for line in lines:
-                    line = line.strip()
+                # Process lines, combining multi-line entries
+                i = 0
+                while i < len(lines):
+                    line = lines[i].strip()
                     if not line:
+                        i += 1
                         continue
                     
-                    # First, check if this line contains any statement keywords
                     line_lower = line.lower()
-                    has_statement_keyword = False
-                    for patterns in self.statement_patterns.values():
-                        for pattern in patterns:
-                            if re.search(pattern, line_lower):
-                                has_statement_keyword = True
-                                break
-                        if has_statement_keyword:
-                            break
                     
-                    if not has_statement_keyword:
-                        continue  # Skip lines that don't mention statements
-                    
-                    # Find ALL numbers in the line
-                    all_numbers = re.findall(r'\b(\d{1,4})\b', line)
-                    if not all_numbers:
-                        continue
-                    
-                    # For lines with statement keywords, the page number is likely:
-                    # 1. The LAST number in the line (most common)
-                    # 2. Or a number in range 200-500 (typical for financial statements)
-                    
-                    # First try: Look for numbers in financial statement range (200-500)
-                    statement_range_numbers = [int(n) for n in all_numbers if 200 <= int(n) <= 500]
-                    
-                    if statement_range_numbers:
-                        # Use the first number in statement range
-                        reported_page = statement_range_numbers[0]
-                    else:
-                        # Fallback: use the last number in the line
-                        reported_page = int(all_numbers[-1])
-                    
-                    # Extract title (just use the whole line for now, will match pattern below)
-                    title = line
-                    
-                    # Match against statement patterns
+                    # Check each statement type
                     for statement_type, patterns in self.statement_patterns.items():
-                        matched = False
+                        # Skip if we already found this statement on this ToC page
+                        if any(e.toc_page == toc_page for e in entries[statement_type]):
+                            continue
+                        
+                        # Check if this line (or combined with next lines) matches any pattern
                         for pattern in patterns:
-                            if re.search(pattern, title, re.IGNORECASE):
-                                entry = TOCEntry(
-                                    title=title,
-                                    reported_page=reported_page,
-                                    toc_page=toc_page,
-                                    confidence=0.95  # Very high confidence for ToC matches
-                                )
-                                entries[statement_type].append(entry)
-                                matched = True
-                                break
-                        if matched:
-                            break
+                            # Try matching just this line first
+                            combined_line = line
+                            combined_line_lower = line_lower
+                            
+                            # If no match, try combining with next 2 lines (for multi-line entries)
+                            lines_to_try = [combined_line]
+                            if not re.search(pattern, combined_line_lower):
+                                if i + 1 < len(lines):
+                                    combined_line = line + " " + lines[i + 1].strip()
+                                    combined_line_lower = combined_line.lower()
+                                    lines_to_try.append(combined_line)
+                                if i + 2 < len(lines):
+                                    combined_line = line + " " + lines[i + 1].strip() + " " + lines[i + 2].strip()
+                                    combined_line_lower = combined_line.lower()
+                                    lines_to_try.append(combined_line)
+                            
+                            # Check if any combination matches
+                            matched_line = None
+                            for test_line in lines_to_try:
+                                if re.search(pattern, test_line.lower()):
+                                    matched_line = test_line
+                                    break
+                            
+                            if matched_line:
+                                # Extract page number (look for 3-digit number in range 150-500)
+                                numbers = re.findall(r'\b(\d{3})\b', matched_line)
+                                statement_range_numbers = [int(n) for n in numbers if 150 <= int(n) <= 500]
+                                
+                                if statement_range_numbers:
+                                    reported_page = statement_range_numbers[0]
+                                    
+                                    entry = TOCEntry(
+                                        title=matched_line,
+                                        reported_page=reported_page,
+                                        toc_page=toc_page,
+                                        confidence=0.95
+                                    )
+                                    entries[statement_type].append(entry)
+                                    break
+                        
+                    i += 1
                                 
             except Exception:
                 continue
@@ -180,48 +181,47 @@ class TOCDetector:
         """
         Compute the offset between reported page numbers and actual PDF page indices.
         
-        Strategy: Check pages around the reported page numbers to find matching content.
+        Strategy: For each reported page, scan nearby PDF pages for matching statement content.
         
         Args:
             pdf: pdfplumber PDF object
             toc_entries: Extracted ToC entries
             
         Returns:
-            Page offset (reported_page + offset = pdf_index)
+            Page offset (pdf_page_index = reported_page + offset)
         """
-        # Collect all reported pages and titles
-        candidates = []
+        # Collect all reported pages with their statement types
+        test_cases = []
         for statement_type, entries in toc_entries.items():
             for entry in entries:
-                # Extract key words from title for matching
-                title_lower = entry.title.lower()
-                key_words = []
-                if 'income' in title_lower:
-                    key_words = ['income', 'statement', 'profit', 'loss']
-                elif 'financial position' in title_lower or 'balance' in title_lower:
-                    key_words = ['financial position', 'balance sheet', 'assets', 'liabilities']
-                elif 'cash flow' in title_lower:
-                    key_words = ['cash flow', 'statement']
+                # Determine key phrases to look for
+                if 'income' in statement_type.lower():
+                    key_phrases = ['income statement', 'profit or loss', 'profit and loss']
+                elif 'financial position' in statement_type.lower():
+                    key_phrases = ['financial position', 'balance sheet', 'statement of financial position']
+                elif 'cash flow' in statement_type.lower():
+                    key_phrases = ['cash flow', 'statement of cash flow']
+                else:
+                    key_phrases = []
                 
-                candidates.append({
+                test_cases.append({
                     'reported_page': entry.reported_page,
-                    'key_words': key_words,
-                    'title': entry.title
+                    'key_phrases': key_phrases,
+                    'type': statement_type
                 })
         
-        if not candidates:
+        if not test_cases:
             return 0
         
-        # Try different offsets and score them
+        # Try different offsets (-5 to +10) and score them
         best_offset = 0
         best_score = 0
         
-        # Test offsets from -10 to +10
-        for test_offset in range(-10, 11):
+        for test_offset in range(-5, 11):
             score = 0
             
-            for candidate in candidates:
-                pdf_page_idx = candidate['reported_page'] + test_offset
+            for case in test_cases:
+                pdf_page_idx = case['reported_page'] + test_offset
                 
                 # Check if this page exists
                 if not (0 <= pdf_page_idx < len(pdf.pages)):
@@ -229,11 +229,13 @@ class TOCDetector:
                 
                 try:
                     page = pdf.pages[pdf_page_idx]
-                    text = (page.extract_text() or "").lower()
+                    text = (page.extract_text() or "").lower()[:1500]  # First 1500 chars
                     
-                    # Check if key words appear on this page
-                    words_found = sum(1 for word in candidate['key_words'] if word in text)
-                    score += words_found
+                    # Check if any key phrases appear
+                    for phrase in case['key_phrases']:
+                        if phrase in text:
+                            score += 2  # Strong match
+                            break
                     
                 except Exception:
                     continue

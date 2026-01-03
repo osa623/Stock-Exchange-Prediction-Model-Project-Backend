@@ -113,7 +113,7 @@ class PageLocator:
                     if toc_candidates:
                         # Use ONLY ToC results when available
                         candidates = toc_candidates
-                        print(f"  ℹ️  Using ToC-based detection for {stmt_type} (most reliable)")
+                        print(f"  [i] Using ToC-based detection for {stmt_type} (most reliable)")
                     
                     # Merge overlapping candidates
                     merged = self._merge_candidates(candidates, total_pages)

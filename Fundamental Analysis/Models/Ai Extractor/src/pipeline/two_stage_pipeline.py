@@ -12,6 +12,8 @@ from datetime import datetime
 from src.locator.page_locator import PageLocator, PageLocationResult
 from src.extractor.numeric_normalizer import NumericNormalizer
 from src.extractor.column_interpreter import ColumnInterpreter
+from src.extractor.table_detector import TableDetector
+from src.extractor.row_extractor import RowExtractor
 from src.pdf.table_extractor import TableExtractor
 from src.mapper.mapping_engine import MappingEngine
 from src.validation.accounting_rules import AccountingValidator
@@ -19,6 +21,7 @@ from src.validation.confidence_score import ConfidenceScorer
 from src.schema.canonical_builder import CanonicalBuilder
 from src.schema.review_payload import ReviewPayloadBuilder
 from src.utils.logger import get_logger
+from src.utils.image_saver import StatementImageSaver
 
 logger = get_logger(__name__)
 
@@ -56,6 +59,8 @@ class TwoStagePipeline:
         )
         
         # Stage B components
+        self.table_detector = TableDetector()
+        self.row_extractor = RowExtractor()
         self.table_extractor = TableExtractor(self.config.get('table_extraction', {}))
         self.numeric_normalizer = NumericNormalizer()
         self.column_interpreter = ColumnInterpreter()
@@ -72,6 +77,11 @@ class TwoStagePipeline:
         # Output builders
         self.canonical_builder = CanonicalBuilder()
         self.review_builder = ReviewPayloadBuilder()
+        
+        # Image saver
+        self.image_saver = StatementImageSaver(
+            output_base_dir=self.config.get('image_output_dir', 'app/statement_images')
+        )
         
         logger.info("="*80)
         logger.info("🚀 TWO-STAGE EXTRACTION PIPELINE INITIALIZED")
@@ -127,6 +137,20 @@ class TwoStagePipeline:
                 stage_a_path = self._get_output_path(pdf_path, '_stage_a_locations.json')
                 self.page_locator.save_location_results(best_locations, str(stage_a_path))
                 logger.info(f"\n💾 Saved Stage A results to: {stage_a_path}")
+            
+            # ===== SAVE STATEMENT IMAGES =====
+            logger.info(f"\n📷 SAVING STATEMENT PAGE IMAGES")
+            logger.info("-" * 80)
+            
+            try:
+                saved_images = self.image_saver.save_statement_images(
+                    pdf_path=str(pdf_path),
+                    page_locations=best_locations
+                )
+                result['saved_images'] = saved_images
+            except Exception as e:
+                logger.warning(f"Failed to save statement images: {str(e)}")
+                result['saved_images'] = {}
             
             # ===== STAGE B: STRUCTURED EXTRACTION =====
             logger.info(f"\n{'='*80}")
@@ -234,25 +258,45 @@ class TwoStagePipeline:
         page_range: List[int]
     ) -> Dict[str, Any]:
         """Extract a single statement from specified pages."""
-        # This is a stub - full implementation would:
-        # 1. Extract tables from page range
-        # 2. Interpret columns
-        # 3. Extract and normalize rows
-        # 4. Map to canonical schema
-        # 5. Calculate confidence
         
-        logger.info("   🔧 TODO: Full extraction implementation")
-        logger.info("   - Table detection")
-        logger.info("   - Column interpretation")
-        logger.info("   - Row extraction")
-        logger.info("   - Label mapping")
-        logger.info("   - Numeric normalization")
+        # Step 1: Detect tables
+        logger.info("   📊 Detecting tables...")
+        tables = self.table_detector.detect_tables(pdf, page_range)
+        
+        if not tables:
+            logger.warning(f"   ⚠️  No tables found")
+            return {'rows': [], 'column_info': {}, 'table_count': 0}
+        
+        logger.info(f"   ✓ Found {len(tables)} table(s)")
+        
+        # Step 2: Process the largest/main table (usually the first one)
+        main_table = tables[0] if tables else None
+        if not main_table:
+            return {'rows': [], 'column_info': {}, 'table_count': 0}
+        
+        # Step 3: Interpret columns (Bank/Group and Year1/Year2)
+        logger.info("   🔍 Interpreting columns...")
+        column_info = self.column_interpreter.interpret_columns(main_table['rows'])
+        
+        entity_count = len(column_info.get('entity_cols', {}))
+        year_count = len(column_info.get('year_cols', {}))
+        logger.info(f"   ✓ Found {entity_count} entity columns, {year_count} year columns")
+        
+        # Step 4: Extract rows with label mapping and value normalization
+        logger.info("   📝 Extracting rows...")
+        extracted_rows = self.row_extractor.extract_rows(
+            main_table,
+            column_info,
+            statement_type
+        )
+        
+        logger.info(f"   ✓ Extracted {len(extracted_rows)} rows")
         
         return {
-            'statement_type': statement_type,
-            'page_range': page_range,
-            'status': 'STUB',
-            'data': {}
+            'rows': extracted_rows,
+            'column_info': column_info,
+            'table_count': len(tables),
+            'page_range': page_range
         }
     
     def _validate_extraction(

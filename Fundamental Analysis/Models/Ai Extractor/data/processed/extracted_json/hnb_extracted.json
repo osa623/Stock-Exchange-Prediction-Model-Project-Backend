@@ -1,0 +1,83 @@
+{
+  "metadata": {
+    "extraction_date": "2026-01-03",
+    "schema_version": "1.0",
+    "years": {
+      "Year1": 2024,
+      "Year2": 2023
+    }
+  },
+  "Bank": {
+    "Year1": {
+      "Income_Statement": {
+        "Gross income": 228945309.0,
+        "Interest income": 240243657.0,
+        "Net interest income": 109764979.0,
+        "Fee and commission income": 20022671.0,
+        "Total operating income": 71128783.0,
+        "Net operating income": 174998234.0,
+        "Personnel expenses": 26328854.0,
+        "Other expenses": 27485811.0,
+        "Operating profit before taxes on financial services": 84099442.0,
+        "Dividend per share": 15.0
+      },
+      "Financial Position Statement": {
+        "Placements with banks": 48656010.0,
+        "Reverse repurchases agreements": 5280692.0,
+        "Financial assets measured at amortized cost loans and advances to customers": 1104013319.0,
+        "Investment properties": 868188.0,
+        "Right of use assets": 2302947.0,
+        "Deferred tax assets": 3941633.0,
+        "Other assets": 24537698.0,
+        "Total assets": 2209173700.0,
+        "Due to banks": 6595571.0,
+        "Dividends payable": 994123.0,
+        "Debt securities issued": 448108.0,
+        "Current tax liabilities": 11387381.0,
+        "Deferred tax liabilities": 6731283.0,
+        "Insurance provision life": 4507058.0,
+        "Other provisions": 20306114.0,
+        "Other liabilities": 21548786.0,
+        "Subordinated term debts": 29967185.0,
+        "Total liabilities": 1939424227.0
+      },
+      "Cash Flow Statement": {}
+    },
+    "Year2": {
+      "Income_Statement": {
+        "Gross income": 336638191.0,
+        "Interest income": 304578112.0,
+        "Net interest income": 118074562.0,
+        "Fee and commission income": 17207633.0,
+        "Total operating income": 60375195.0,
+        "Net operating income": 106975731.0,
+        "Personnel expenses": 20934258.0,
+        "Other expenses": 24222208.0,
+        "Operating profit before taxes on financial services": 37218175.0,
+        "Dividend per share": 8.0
+      },
+      "Financial Position Statement": {
+        "Placements with banks": 61836382.0,
+        "Reverse repurchases agreements": 1830461.0,
+        "Financial assets measured at amortized cost loans and advances to customers": 988601197.0,
+        "Investment properties": 913922.0,
+        "Right of use assets": 2473450.0,
+        "Deferred tax assets": 33967277.0,
+        "Other assets": 33414983.0,
+        "Total assets": 2047040410.0,
+        "Due to banks": 9019582.0,
+        "Dividends payable": 990781.0,
+        "Debt securities issued": 550160.0,
+        "Current tax liabilities": 24707679.0,
+        "Deferred tax liabilities": 6552515.0,
+        "Insurance provision life": 4694303.0,
+        "Other provisions": 9697283.0,
+        "Other liabilities": 20696216.0,
+        "Subordinated term debts": 22255164.0,
+        "Total liabilities": 1827483629.0
+      },
+      "Cash Flow Statement": {}
+    }
+  },
+  "Group": {}
+}

@@ -63,12 +63,12 @@ class CanonicalBuilder:
                 year_cols = column_info.get('year_cols', {})
                 all_years.update(year_cols.values())
         
-        # Sort years to determine Year1 (older) and Year2 (newer)
-        sorted_years = sorted(list(all_years))
+        # Sort years to determine Year1 (newer) and Year2 (older)
+        sorted_years = sorted(list(all_years), reverse=True)  # Descending: [2024, 2023]
         year_mapping = {}
         if len(sorted_years) >= 2:
-            year_mapping[sorted_years[0]] = 'Year2'  # Older year
-            year_mapping[sorted_years[1]] = 'Year1'  # Newer year
+            year_mapping[sorted_years[0]] = 'Year1'  # 2024 -> Year1 (current year)
+            year_mapping[sorted_years[1]] = 'Year2'  # 2023 -> Year2 (previous year)
         elif len(sorted_years) == 1:
             year_mapping[sorted_years[0]] = 'Year1'
         
@@ -108,10 +108,30 @@ class CanonicalBuilder:
                     if year_label in output[entity] and statement_type in output[entity][year_label]:
                         output[entity][year_label][statement_type][canonical_label] = value
         
-        output['_metadata'] = {
-            'extraction_timestamp': datetime.now().isoformat(),
+        # Add metadata with year information for clarity
+        metadata = {
+            'extraction_date': datetime.now().strftime('%Y-%m-%d'),
             'schema_version': '1.0',
-            'year_mapping': year_mapping
+            'years': {
+                'Year1': sorted_years[0] if len(sorted_years) >= 1 else None,
+                'Year2': sorted_years[1] if len(sorted_years) >= 2 else None
+            }
         }
         
-        return output
+        # Create clean output without empty sections
+        clean_output = {
+            'metadata': metadata,
+            'Bank': {},
+            'Group': {}
+        }
+        
+        # Only include years that have data
+        for entity in ['Bank', 'Group']:
+            for year in ['Year1', 'Year2']:
+                year_data = output[entity][year]
+                # Check if any statement has data
+                has_data = any(len(stmt_data) > 0 for stmt_data in year_data.values())
+                if has_data:
+                    clean_output[entity][year] = year_data
+        
+        return clean_output

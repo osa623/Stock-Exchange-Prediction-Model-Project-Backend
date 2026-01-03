@@ -1,0 +1,567 @@
+{
+  "pdf_path": "F:\\Stock-Exchange-Prediction-Model-Project\\Fundamental Analysis\\Models\\Ai Extractor\\data\\raw\\hnb\\hnb.pdf",
+  "timestamp": "2026-01-03T18:21:44.026871",
+  "stage_a_results": {
+    "Income_Statement": [
+      {
+        "page_range": [
+          289,
+          290
+        ],
+        "confidence": 0.99,
+        "evidence": [
+          "From Contents: Income Statement at page 288",
+          "Layout analysis confirms (score: 0.87)"
+        ],
+        "sources": [
+          "toc",
+          "layout_analysis"
+        ]
+      }
+    ],
+    "Financial Position Statement": [
+      {
+        "page_range": [
+          291,
+          292
+        ],
+        "confidence": 0.99,
+        "evidence": [
+          "From Contents: Financial Position at page 290",
+          "Layout analysis confirms (score: 0.87)"
+        ],
+        "sources": [
+          "toc",
+          "layout_analysis"
+        ]
+      }
+    ],
+    "Cash Flow Statement": [
+      {
+        "page_range": [
+          297,
+          298
+        ],
+        "confidence": 0.99,
+        "evidence": [
+          "From Contents: Cash Flow at page 296",
+          "Layout analysis confirms (score: 0.86)"
+        ],
+        "sources": [
+          "toc",
+          "layout_analysis"
+        ]
+      }
+    ]
+  },
+  "stage_b_results": {
+    "Income_Statement": {
+      "rows": [
+        {
+          "original_label": "Gross income",
+          "canonical_label": "Gross income",
+          "confidence": 1.0,
+          "values": {
+            "Unknown_Unknown": 7.0,
+            "Bank_2024": 228945309.0,
+            "Bank_2023": 336638191.0
+          }
+        },
+        {
+          "original_label": "Interest income",
+          "canonical_label": "Interest income",
+          "confidence": 1.0,
+          "values": {
+            "Bank_2024": 240243657.0,
+            "Bank_2023": 304578112.0
+          }
+        },
+        {
+          "original_label": "Net interest inco",
+          "canonical_label": "Net interest income",
+          "confidence": 0.9444444444444444,
+          "values": {
+            "Unknown_Unknown": 8.0,
+            "Bank_2024": 109764979.0,
+            "Bank_2023": 118074562.0
+          }
+        },
+        {
+          "original_label": "Fee and commiss",
+          "canonical_label": "Fee and commission income",
+          "confidence": 0.8571428571428572,
+          "values": {
+            "Unknown_Unknown": null,
+            "Bank_2024": 20022671.0,
+            "Bank_2023": 17207633.0
+          }
+        },
+        {
+          "original_label": "Net gains from fi",
+          "canonical_label": "Net gains from financial investments at fair value through other comprehensive income",
+          "confidence": 0.9189189189189189,
+          "values": {
+            "Unknown_Unknown": null
+          }
+        },
+        {
+          "original_label": "Total operating i",
+          "canonical_label": "Total operating income",
+          "confidence": 0.8717948717948718,
+          "values": {
+            "Unknown_Unknown": null,
+            "Bank_2024": 97592685.0,
+            "Bank_2023": 149499661.0
+          }
+        },
+        {
+          "original_label": "Net operating in",
+          "canonical_label": "Net operating income",
+          "confidence": 0.8888888888888888,
+          "values": {
+            "Unknown_Unknown": null,
+            "Bank_2024": 174998234.0,
+            "Bank_2023": 106975731.0
+          }
+        },
+        {
+          "original_label": "Personnel expens",
+          "canonical_label": "Personnel expenses",
+          "confidence": 0.9411764705882352,
+          "values": {
+            "Unknown_Unknown": 16.0,
+            "Bank_2024": 26328854.0,
+            "Bank_2023": 20934258.0
+          }
+        },
+        {
+          "original_label": "Other expenses",
+          "canonical_label": "Other expenses",
+          "confidence": 1.0,
+          "values": {
+            "Unknown_Unknown": 18.0,
+            "Bank_2024": 27485811.0,
+            "Bank_2023": 24222208.0
+          }
+        },
+        {
+          "original_label": "Total operating e",
+          "canonical_label": "Total operating income",
+          "confidence": 0.8717948717948718,
+          "values": {
+            "Unknown_Unknown": null,
+            "Bank_2024": 71128783.0,
+            "Bank_2023": 60375195.0
+          }
+        },
+        {
+          "original_label": "PROFIT BEFORE",
+          "canonical_label": "Operating profit before taxes on financial services",
+          "confidence": 0.8666666666666667,
+          "values": {
+            "Unknown_Unknown": null,
+            "Bank_2024": 84099442.0,
+            "Bank_2023": 37218175.0
+          }
+        },
+        {
+          "original_label": "Profit attributable",
+          "canonical_label": "Profit attributable to:",
+          "confidence": 0.926829268292683,
+          "values": {
+            "Unknown_Unknown": null
+          }
+        },
+        {
+          "original_label": "Earnings per sha",
+          "canonical_label": "Earnings per share",
+          "confidence": 0.9411764705882352,
+          "values": {
+            "Unknown_Unknown": null
+          }
+        },
+        {
+          "original_label": "Dividend per sha",
+          "canonical_label": "Dividend per share",
+          "confidence": 0.9411764705882352,
+          "values": {
+            "Unknown_Unknown": 23.0
+          }
+        },
+        {
+          "original_label": "Dividend per sha",
+          "canonical_label": "Dividend per share",
+          "confidence": 0.9411764705882352,
+          "values": {
+            "Unknown_Unknown": null,
+            "Bank_2024": 15.0,
+            "Bank_2023": 8.0
+          }
+        }
+      ],
+      "column_info": {
+        "entity_cols": {
+          "5": "Bank",
+          "6": "Bank",
+          "7": "Bank",
+          "8": "Bank"
+        },
+        "year_cols": {
+          "5": 2024,
+          "6": 2023,
+          "7": 2024,
+          "8": 2023
+        }
+      },
+      "table_count": 2,
+      "page_range": [
+        289,
+        290
+      ]
+    },
+    "Financial Position Statement": {
+      "rows": [
+        {
+          "original_label": "Placements with ba",
+          "canonical_label": "Placements with banks",
+          "confidence": 0.923076923076923,
+          "values": {
+            "Unknown_Unknown": 26.0,
+            "Bank_2024": 48656010.0,
+            "Bank_2023": 61836382.0
+          }
+        },
+        {
+          "original_label": "Reverse repurchase",
+          "canonical_label": "Reverse repurchases agreements",
+          "confidence": 0.95,
+          "values": {
+            "Unknown_Unknown": 28.0,
+            "Bank_2024": 5280692.0,
+            "Bank_2023": 1830461.0
+          }
+        },
+        {
+          "original_label": "- loans and advan",
+          "canonical_label": "Financial assets measured at amortized cost loans and advances to customers",
+          "confidence": 0.8571428571428572,
+          "values": {
+            "Unknown_Unknown": 31.0,
+            "Bank_2024": 1104013319.0,
+            "Bank_2023": 988601197.0
+          }
+        },
+        {
+          "original_label": "Investment properti",
+          "canonical_label": "Investment properties",
+          "confidence": 0.95,
+          "values": {
+            "Unknown_Unknown": 36.0,
+            "Bank_2024": 868188.0,
+            "Bank_2023": 913922.0
+          }
+        },
+        {
+          "original_label": "Right-of-use assets",
+          "canonical_label": "Right of use assets",
+          "confidence": 1.0,
+          "values": {
+            "Unknown_Unknown": 38.0,
+            "Bank_2024": 2302947.0,
+            "Bank_2023": 2473450.0
+          }
+        },
+        {
+          "original_label": "Deferred tax assets",
+          "canonical_label": "Deferred tax assets",
+          "confidence": 1.0,
+          "values": {
+            "Unknown_Unknown": 40.0,
+            "Bank_2024": 3941633.0,
+            "Bank_2023": 33967277.0
+          }
+        },
+        {
+          "original_label": "Other assets",
+          "canonical_label": "Other assets",
+          "confidence": 1.0,
+          "values": {
+            "Unknown_Unknown": 41.0,
+            "Bank_2024": 24537698.0,
+            "Bank_2023": 33414983.0
+          }
+        },
+        {
+          "original_label": "Total assets",
+          "canonical_label": "Total assets",
+          "confidence": 1.0,
+          "values": {
+            "Bank_2024": 2209173700.0,
+            "Bank_2023": 2047040410.0
+          }
+        },
+        {
+          "original_label": "Due to banks",
+          "canonical_label": "Due to banks",
+          "confidence": 1.0,
+          "values": {
+            "Unknown_Unknown": 42.0,
+            "Bank_2024": 6595571.0,
+            "Bank_2023": 9019582.0
+          }
+        },
+        {
+          "original_label": "Dividends payable",
+          "canonical_label": "Dividends payable",
+          "confidence": 1.0,
+          "values": {
+            "Unknown_Unknown": 45.0,
+            "Bank_2024": 994123.0,
+            "Bank_2023": 990781.0
+          }
+        },
+        {
+          "original_label": "Debt securities issu",
+          "canonical_label": "Debt securities issued",
+          "confidence": 0.9523809523809522,
+          "values": {
+            "Unknown_Unknown": 47.0,
+            "Bank_2023": 550160.0,
+            "Bank_2024": 448108.0
+          }
+        },
+        {
+          "original_label": "Current tax liabilitie",
+          "canonical_label": "Current tax liabilities",
+          "confidence": 0.9777777777777777,
+          "values": {
+            "Unknown_Unknown": 48.0,
+            "Bank_2024": 11387381.0,
+            "Bank_2023": 24707679.0
+          }
+        },
+        {
+          "original_label": "Deferred tax liabiliti",
+          "canonical_label": "Deferred tax liabilities",
+          "confidence": 0.9565217391304348,
+          "values": {
+            "Unknown_Unknown": 40.0,
+            "Bank_2024": 6731283.0,
+            "Bank_2023": 6552515.0
+          }
+        },
+        {
+          "original_label": "Insurance provision",
+          "canonical_label": "Insurance provision life",
+          "confidence": 0.8837209302325582,
+          "values": {
+            "Unknown_Unknown": 49.0,
+            "Bank_2024": 38877712.0,
+            "Bank_2023": 30975260.0
+          }
+        },
+        {
+          "original_label": "Insurance provision",
+          "canonical_label": "Insurance provision life",
+          "confidence": 0.8837209302325582,
+          "values": {
+            "Unknown_Unknown": 50.0,
+            "Bank_2024": 4507058.0,
+            "Bank_2023": 4694303.0
+          }
+        },
+        {
+          "original_label": "Other provisions",
+          "canonical_label": "Other provisions",
+          "confidence": 1.0,
+          "values": {
+            "Bank_2024": 20306114.0,
+            "Bank_2023": 9697283.0
+          }
+        },
+        {
+          "original_label": "Other liabilities",
+          "canonical_label": "Other liabilities",
+          "confidence": 1.0,
+          "values": {
+            "Unknown_Unknown": 51.0,
+            "Bank_2024": 21548786.0,
+            "Bank_2023": 20696216.0
+          }
+        },
+        {
+          "original_label": "Subordinated term",
+          "canonical_label": "Subordinated term debts",
+          "confidence": 0.85,
+          "values": {
+            "Unknown_Unknown": 52.0,
+            "Bank_2024": 29967185.0,
+            "Bank_2023": 22255164.0
+          }
+        },
+        {
+          "original_label": "Total liabilities",
+          "canonical_label": "Total liabilities",
+          "confidence": 1.0,
+          "values": {
+            "Bank_2024": 1939424227.0,
+            "Bank_2023": 1827483629.0
+          }
+        }
+      ],
+      "column_info": {
+        "entity_cols": {
+          "6": "Bank",
+          "7": "Bank",
+          "8": "Bank",
+          "9": "Bank"
+        },
+        "year_cols": {
+          "6": 2024,
+          "7": 2023,
+          "8": 2024,
+          "9": 2023
+        }
+      },
+      "table_count": 2,
+      "page_range": [
+        291,
+        292
+      ]
+    },
+    "Cash Flow Statement": {
+      "rows": [],
+      "column_info": {
+        "entity_cols": {
+          "7": "Bank"
+        },
+        "year_cols": {}
+      },
+      "table_count": 2,
+      "page_range": [
+        297,
+        298
+      ]
+    }
+  },
+  "canonical_output": {
+    "metadata": {
+      "extraction_date": "2026-01-03",
+      "schema_version": "1.0",
+      "years": {
+        "Year1": 2024,
+        "Year2": 2023
+      }
+    },
+    "Bank": {
+      "Year1": {
+        "Income_Statement": {
+          "Gross income": 228945309.0,
+          "Interest income": 240243657.0,
+          "Net interest income": 109764979.0,
+          "Fee and commission income": 20022671.0,
+          "Total operating income": 71128783.0,
+          "Net operating income": 174998234.0,
+          "Personnel expenses": 26328854.0,
+          "Other expenses": 27485811.0,
+          "Operating profit before taxes on financial services": 84099442.0,
+          "Dividend per share": 15.0
+        },
+        "Financial Position Statement": {
+          "Placements with banks": 48656010.0,
+          "Reverse repurchases agreements": 5280692.0,
+          "Financial assets measured at amortized cost loans and advances to customers": 1104013319.0,
+          "Investment properties": 868188.0,
+          "Right of use assets": 2302947.0,
+          "Deferred tax assets": 3941633.0,
+          "Other assets": 24537698.0,
+          "Total assets": 2209173700.0,
+          "Due to banks": 6595571.0,
+          "Dividends payable": 994123.0,
+          "Debt securities issued": 448108.0,
+          "Current tax liabilities": 11387381.0,
+          "Deferred tax liabilities": 6731283.0,
+          "Insurance provision life": 4507058.0,
+          "Other provisions": 20306114.0,
+          "Other liabilities": 21548786.0,
+          "Subordinated term debts": 29967185.0,
+          "Total liabilities": 1939424227.0
+        },
+        "Cash Flow Statement": {}
+      },
+      "Year2": {
+        "Income_Statement": {
+          "Gross income": 336638191.0,
+          "Interest income": 304578112.0,
+          "Net interest income": 118074562.0,
+          "Fee and commission income": 17207633.0,
+          "Total operating income": 60375195.0,
+          "Net operating income": 106975731.0,
+          "Personnel expenses": 20934258.0,
+          "Other expenses": 24222208.0,
+          "Operating profit before taxes on financial services": 37218175.0,
+          "Dividend per share": 8.0
+        },
+        "Financial Position Statement": {
+          "Placements with banks": 61836382.0,
+          "Reverse repurchases agreements": 1830461.0,
+          "Financial assets measured at amortized cost loans and advances to customers": 988601197.0,
+          "Investment properties": 913922.0,
+          "Right of use assets": 2473450.0,
+          "Deferred tax assets": 33967277.0,
+          "Other assets": 33414983.0,
+          "Total assets": 2047040410.0,
+          "Due to banks": 9019582.0,
+          "Dividends payable": 990781.0,
+          "Debt securities issued": 550160.0,
+          "Current tax liabilities": 24707679.0,
+          "Deferred tax liabilities": 6552515.0,
+          "Insurance provision life": 4694303.0,
+          "Other provisions": 9697283.0,
+          "Other liabilities": 20696216.0,
+          "Subordinated term debts": 22255164.0,
+          "Total liabilities": 1827483629.0
+        },
+        "Cash Flow Statement": {}
+      }
+    },
+    "Group": {}
+  },
+  "review_payload": {
+    "review_required": false,
+    "confidence_summary": {
+      "overall": 0.0,
+      "by_statement": {}
+    },
+    "validation_summary": {
+      "needs_review": false,
+      "validation_passed": true,
+      "warnings": []
+    },
+    "statement_details": {
+      "Income_Statement": {
+        "pages_used": null,
+        "location_confidence": null,
+        "extraction_status": "PENDING"
+      },
+      "Financial Position Statement": {
+        "pages_used": null,
+        "location_confidence": null,
+        "extraction_status": "PENDING"
+      },
+      "Cash Flow Statement": {
+        "pages_used": null,
+        "location_confidence": null,
+        "extraction_status": "PENDING"
+      }
+    },
+    "mapping_decisions": [],
+    "extraction_warnings": []
+  },
+  "overall_status": "SUCCESS",
+  "validation_results": {
+    "needs_review": false,
+    "validation_passed": true,
+    "warnings": []
+  }
+}

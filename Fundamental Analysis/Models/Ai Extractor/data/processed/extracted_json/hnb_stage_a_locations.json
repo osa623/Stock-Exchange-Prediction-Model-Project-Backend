@@ -3,13 +3,13 @@
     {
       "statement_type": "Income_Statement",
       "page_range": [
-        157,
-        158
+        289,
+        290
       ],
-      "confidence": 0.98,
+      "confidence": 0.99,
       "evidence": [
-        "From Contents: Income Statement at page 156",
-        "Layout analysis confirms (score: 0.77)"
+        "From Contents: Income Statement at page 288",
+        "Layout analysis confirms (score: 0.87)"
       ],
       "sources": [
         "toc",
@@ -22,15 +22,17 @@
     {
       "statement_type": "Financial Position Statement",
       "page_range": [
-        155,
-        156
+        291,
+        292
       ],
-      "confidence": 0.98,
+      "confidence": 0.99,
       "evidence": [
-        "From Contents: Financial Position at page 156"
+        "From Contents: Financial Position at page 290",
+        "Layout analysis confirms (score: 0.87)"
       ],
       "sources": [
-        "toc"
+        "toc",
+        "layout_analysis"
       ],
       "metadata": {}
     }
@@ -39,13 +41,13 @@
     {
       "statement_type": "Cash Flow Statement",
       "page_range": [
-        157,
-        158
+        297,
+        298
       ],
-      "confidence": 0.98,
+      "confidence": 0.99,
       "evidence": [
-        "From Contents: Cash Flow at page 158",
-        "Layout analysis confirms (score: 0.77)"
+        "From Contents: Cash Flow at page 296",
+        "Layout analysis confirms (score: 0.86)"
       ],
       "sources": [
         "toc",

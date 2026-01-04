@@ -4,12 +4,10 @@
 INCOME_STATEMENT_KEYWORDS = [
     "income statement",
     "statement of profit or loss",
-    "statement of comprehensive income",
     "profit and loss",
     "p&l statement",
     "statement of income",
     "consolidated income statement",
-    "statement of profit and loss and other comprehensive income"
 ]
 
 # Keywords to identify Financial Position Statement

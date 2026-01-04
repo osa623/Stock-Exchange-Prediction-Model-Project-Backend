@@ -1,49 +1,11 @@
 # PDF Processing
-PyPDF2==3.0.1
 pdfplumber==0.11.0
 pdf2image==1.17.0
-pymupdf==1.23.8
 
 # OCR and Image Processing
 pytesseract==0.3.10
 Pillow==10.2.0
-opencv-python==4.9.0.80
-
-# AI/LLM APIs
-openai==1.12.0
-anthropic==0.18.1
-google-generativeai==0.3.2
-
-# Data Processing
-pandas==2.2.0
-numpy==1.26.3
-python-dateutil==2.8.2
-
-# Table Extraction
-camelot-py==0.11.0
-tabula-py==2.9.0
-
-# Text Processing and NLP
-fuzzywuzzy==0.18.0
-python-Levenshtein==0.25.0
-regex==2023.12.25
-rapidfuzz==3.6.1
-sentence-transformers==2.3.1
-transformers==4.36.2
-torch==2.1.2
-
-# Configuration
-PyYAML==6.0.1
-python-dotenv==1.0.1
-
-# Database (optional)
-psycopg2-binary==2.9.9
-SQLAlchemy==2.0.25
 
 # Utilities
-tqdm==4.66.1
-colorama==0.4.6
-
-# Testing
-pytest==8.0.0
-pytest-cov==4.1.0
+# Utilities
+python-dateutil==2.8.2

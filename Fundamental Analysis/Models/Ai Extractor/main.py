@@ -1,17 +1,16 @@
 """
-Main entry point for two-stage financial statement extraction
-Stage A: Intelligent page location using ToC detection
-Stage B: Structured data extraction with Bank/Group and Year1/Year2 organization
+Simplified Financial Statement Page Image Extractor
+Only extracts and saves statement pages as images (no data extraction)
 """
 
 import logging
 from pathlib import Path
 import sys
-import json
 
 sys.path.append(str(Path(__file__).parent))
 
-from src.pipeline.two_stage_pipeline import TwoStagePipeline
+from src.locator.page_locator import PageLocator
+from src.utils.image_saver import StatementImageSaver
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,49 +20,46 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    """Main execution function."""
+    """Main entry point for image extraction."""
     
     print("\n" + "="*80)
-    print("🚀 TWO-STAGE FINANCIAL STATEMENT EXTRACTOR")
+    print("📷 FINANCIAL STATEMENT PAGE IMAGE EXTRACTOR")
     print("="*80)
-    print("📄 Stage A: Intelligent Page Location (ToC-based)")
-    print("📊 Stage B: Structured Data Extraction (Bank/Group + Year1/Year2)")
-    print("✅ Works with any bank annual report")
+    print("📄 Locates financial statement pages and saves them as images")
     print("="*80 + "\n")
     
-    # Initialize extractor
-    pipeline = TwoStagePipeline()
+    # Initialize components
+    page_locator = PageLocator(min_confidence=0.5)
+    image_saver = StatementImageSaver(output_base_dir="app/statement_images")
     
     # Define PDF paths
     data_dir = Path(__file__).parent / "data" / "raw"
     
     # Available PDFs
     pdf_files = {
-        "1": data_dir / "pabc" / "pabc.pdf",
-        "2": data_dir / "hnb" / "hnb.pdf",
-        "3": data_dir / "commercial" / "Commerical.pdf",
-        "4": data_dir / "dfcc" / "DFCC.pdf",
-        "5": data_dir / "janashakthi" / "janashakthi.pdf",
-        "6": data_dir / "jhonkeels" / "jhonkeells.pdf",
+        "1": ("Pan Asia Banking Corporation (PABC)", data_dir / "pabc" / "pabc.pdf"),
+        "2": ("HNB Bank", data_dir / "hnb" / "hnb.pdf"),
+        "3": ("Commercial Bank", data_dir / "commercial" / "Commerical.pdf"),
+        "4": ("DFCC Bank", data_dir / "dfcc" / "DFCC.pdf"),
+        "5": ("Sampath Bank", data_dir / "samp" / "SAMP.pdf"),
+        "6": ("NDB Bank", data_dir / "ndb" / "NDB.pdf"),
+        "7": ("Custom path", None)
     }
     
     # Display menu
-    print("Select a PDF to extract:")
-    print("1. Pan Asia Banking Corporation (PABC)")
-    print("2. HNB Bank")
-    print("3. Commercial Bank")
-    print("4. DFCC Bank")
-    print("5. Janashakthi Bank")
-    print("6. John Keells")
-    print("7. Custom path")
+    
+    # Display menu
+    print("Select a PDF to process:")
+    for key, (name, _) in pdf_files.items():
+        print(f"{key}. {name}")
     
     choice = input("\nEnter choice (1-7): ").strip()
     
-    if choice in pdf_files:
-        pdf_path = pdf_files[choice]
-    elif choice == "7":
+    if choice == "7":
         custom_path = input("Enter PDF path: ").strip()
         pdf_path = Path(custom_path)
+    elif choice in pdf_files:
+        _, pdf_path = pdf_files[choice]
     else:
         print("❌ Invalid choice")
         return
@@ -72,50 +68,48 @@ def main():
         print(f"❌ PDF not found: {pdf_path}")
         return
     
-    # Extract
+    # Process PDF
     try:
-        logger.info(f"\n🚀 Starting extraction from: {pdf_path.name}\n")
+        logger.info(f"\n🚀 Processing: {pdf_path.name}\n")
         
-        result = pipeline.extract(str(pdf_path), save_intermediates=True)
+        # Stage 1: Locate statement pages
+        logger.info("=" * 80)
+        logger.info("📍 STAGE 1: LOCATING STATEMENT PAGES")
+        logger.info("=" * 80)
         
-        # Get canonical output
-        canonical_output = result.get('canonical_output', {})
+        page_locations = page_locator.locate_statements(str(pdf_path))
+        best_locations = page_locator.get_best_candidates(page_locations, top_n=1)
         
-        # Save user-friendly output
-        output_dir = Path(__file__).parent / "data" / "processed" / "extracted_json"
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_file = output_dir / f"{pdf_path.stem}_extracted.json"
+        # Print summary
+        page_locator.print_summary(best_locations)
         
-        with open(output_file, 'w') as f:
-            json.dump(canonical_output, f, indent=2)
+        # Stage 2: Save images
+        logger.info("\n" + "=" * 80)
+        logger.info("📷 STAGE 2: SAVING STATEMENT PAGE IMAGES")
+        logger.info("=" * 80)
+        
+        saved_images = image_saver.save_statement_images(
+            pdf_path=str(pdf_path),
+            page_locations=best_locations
+        )
         
         # Display summary
         print("\n" + "="*80)
-        print("✅ EXTRACTION COMPLETED SUCCESSFULLY")
+        print("✅ IMAGE EXTRACTION COMPLETE")
         print("="*80)
         
-        for entity in ["Bank", "Group"]:
-            for year in ["Year1", "Year2"]:
-                year_data = canonical_output.get(entity, {}).get(year, {})
-                if not year_data:
-                    continue
-                    
-                income_fields = len(year_data.get('Income_Statement', {}))
-                position_fields = len(year_data.get('Financial Position Statement', {}))
-                cashflow_fields = len(year_data.get('Cash Flow Statement', {}))
-                total_fields = income_fields + position_fields + cashflow_fields
-                
-                if total_fields > 0:
-                    print(f"📊 {entity} {year}: {total_fields} fields extracted")
-                    print(f"   - Income Statement: {income_fields}")
-                    print(f"   - Financial Position: {position_fields}")
-                    print(f"   - Cash Flow: {cashflow_fields}")
+        total_images = sum(len(imgs) for imgs in saved_images.values())
+        print(f"📊 Total images saved: {total_images}")
         
-        print(f"\n💾 Results saved to: {output_file}")
+        for statement, images in saved_images.items():
+            print(f"   - {statement}: {len(images)} pages")
+        
+        company_dir = image_saver.get_company_directory(pdf_path.stem)
+        print(f"\n💾 Images saved to: {company_dir}")
         print("="*80 + "\n")
         
     except Exception as e:
-        logger.error(f"❌ Extraction failed: {e}", exc_info=True)
+        logger.error(f"❌ Processing failed: {e}", exc_info=True)
 
 
 if __name__ == "__main__":

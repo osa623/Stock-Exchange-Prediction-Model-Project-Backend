@@ -54,7 +54,7 @@ class TestHeadingScanner:
     def test_identify_heading(self, scanner):
         """Test identification of headings."""
         # Title case, short, has statement keyword
-        heading = "Statement of Comprehensive Income"
+        heading = "Income Statement" , "Statement of Income",
         score = scanner.is_likely_heading(heading, 'top')
         
         assert score > 0.5

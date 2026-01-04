@@ -66,7 +66,7 @@ class TOCDetector:
                 page_num = int(match.group(1))
                 if 150 <= page_num <= 500:  # Reasonable range
                     # Find actual PDF page by checking content
-                    pdf_page = self._find_actual_page(pdf, page_num, ['INCOME STATEMENT', 'PROFIT OR LOSS', 'income statement', 'profit or loss'])
+                    pdf_page = self._find_actual_page(pdf, page_num, ['income statement', 'profit or loss'])
                     if pdf_page is not None:
                         results['Income_Statement'].append({
                             'page_range': [pdf_page, pdf_page + 1],
@@ -186,19 +186,7 @@ class TOCDetector:
                 try:
                     page = pdf.pages[pdf_page_idx]
                     text = (page.extract_text() or "").lower()
-
-                    # first -> checking the if these are in the index ot TOC pages
-                    index_indicators = [
-                        "table of contents" in text,
-                        "contents" in text[:1000] and "page" in text[:1000],
-                        text.count("................................") > 5,
-                        text.count("....") > 3,
-                        len(re.findall(r'\d{2,3}\s*\n', text)) > 10,
-                    ]    
-
-                    if any(index_indicators):   
-                        continue
-                        
+                    
                     # Check if keywords appear
                     has_keywords = any(keyword in text for keyword in keywords)
                     
@@ -207,9 +195,6 @@ class TOCDetector:
                         # This prevents matching title pages
                         has_both_years = "2024" in text and "2023" in text
                         has_currency = "rs '000" in text or "rs. '000" in text or "rs '0" in text
-                        
-                        formatted_numbers = len(re.findall(r'\d{1,3}(?:,\d{3})+', text))
-                        has_tabular_data = formatted_numbers >= 10  # At least 10 formatted numbers
                         
                         # Statement-specific data indicators
                         statement_indicators = {

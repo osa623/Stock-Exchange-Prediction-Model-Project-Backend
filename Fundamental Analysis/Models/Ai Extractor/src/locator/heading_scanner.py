@@ -26,9 +26,9 @@ class HeadingScanner:
         # Define statement keywords directly
         self.statement_keywords = {
             'Income_Statement': [
-                'INCOME STATEMENT',
                 'income statement',
                 'statement of profit or loss',
+                'statement of comprehensive income',
                 'profit and loss',
                 'statement of income'
             ],

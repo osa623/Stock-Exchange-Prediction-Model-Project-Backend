@@ -1,279 +1,122 @@
-#!/usr/bin/env python
-"""Main entry point for Bank Financial Statement AI Extractor."""
+"""
+Main entry point for two-stage financial statement extraction
+Stage A: Intelligent page location using ToC detection
+Stage B: Structured data extraction with Bank/Group and Year1/Year2 organization
+"""
 
-import sys
-import os
+import logging
 from pathlib import Path
-from datetime import datetime
+import sys
+import json
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.append(str(Path(__file__).parent))
 
-# Load environment variables
-from dotenv import load_dotenv
-load_dotenv()
+from src.pipeline.two_stage_pipeline import TwoStagePipeline
 
-from src.pipeline.extract import ExtractionPipeline
-from src.utils.logger import setup_logger, get_logger
-
-setup_logger("ai_extractor", "logs")
-logger = get_logger(__name__)
-
-
-def print_banner():
-    """Print welcome banner."""
-    print("\n" + "="*70)
-    print("   BANK FINANCIAL STATEMENT AI EXTRACTOR")
-    print("   Automatically extract data from bank PDF reports")
-    print("="*70 + "\n")
-
-
-def check_setup():
-    """Check if system is properly configured."""
-    issues = []
-    
-    # Check API key
-    api_key = os.getenv('GOOGLE_API_KEY')
-    if not api_key:
-        issues.append("❌ GOOGLE_API_KEY not found in .env file")
-        issues.append("   Get free key at: https://makersuite.google.com/app/apikey")
-    else:
-        print(f"✓ Google API Key configured")
-    
-    # Check data directory
-    data_dir = Path("data/raw")
-    if not data_dir.exists():
-        issues.append("❌ data/raw directory not found")
-    else:
-        print(f"✓ Data directory exists")
-    
-    if issues:
-        print("\n⚠️  SETUP ISSUES:\n")
-        for issue in issues:
-            print(issue)
-        print("\nPlease fix the issues above before running.\n")
-        return False
-    
-    return True
-
-
-def find_pdfs():
-    """Find all PDF files in data/raw directory."""
-    data_dir = Path("data/raw")
-    pdf_files = list(data_dir.rglob("*.pdf"))
-    return sorted(pdf_files)
-
-
-def display_menu(pdf_files):
-    """Display PDF selection menu."""
-    print("\n" + "-"*70)
-    print("AVAILABLE PDF FILES:")
-    print("-"*70)
-    
-    if not pdf_files:
-        print("\n❌ No PDF files found in data/raw/")
-        print("\nPlease add bank PDF reports to one of these folders:")
-        print("  - data/raw/hnb/")
-        print("  - data/raw/alliance_finance/")
-        print("  - data/raw/janashakthi/")
-        print("\nOr create a new folder: data/raw/your_bank_name/\n")
-        return None
-    
-    for i, pdf in enumerate(pdf_files, 1):
-        relative_path = pdf.relative_to("data/raw")
-        size_mb = pdf.stat().st_size / (1024 * 1024)
-        print(f"  [{i}] {relative_path} ({size_mb:.1f} MB)")
-    
-    print(f"  [A] Process ALL {len(pdf_files)} files (batch mode)")
-    print(f"  [Q] Quit")
-    print("-"*70)
-    
-    return pdf_files
-
-
-def get_user_choice(pdf_files):
-    """Get user's selection."""
-    while True:
-        choice = input("\nSelect option (number, A for all, Q to quit): ").strip().upper()
-        
-        if choice == 'Q':
-            return None, 'quit'
-        
-        if choice == 'A':
-            return pdf_files, 'batch'
-        
-        try:
-            index = int(choice) - 1
-            if 0 <= index < len(pdf_files):
-                return [pdf_files[index]], 'single'
-            else:
-                print(f"❌ Invalid number. Please enter 1-{len(pdf_files)}")
-        except ValueError:
-            print("❌ Invalid input. Please enter a number, A, or Q")
-
-
-def process_single_pdf(pdf_path, pipeline):
-    """Process a single PDF file."""
-    print("\n" + "="*70)
-    print(f"PROCESSING: {pdf_path.name}")
-    print("="*70)
-    print(f"Location: {pdf_path}")
-    print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("\nExtracting data... (this may take 30-60 seconds)\n")
-    
-    try:
-        # Extract data
-        result = pipeline.extract_from_pdf(str(pdf_path))
-        
-        if 'error' in result:
-            print(f"\n❌ EXTRACTION FAILED: {result['error']}")
-            if 'suggestion' in result:
-                print(f"\n💡 SUGGESTIONS:")
-                print(f"{result['suggestion']}")
-            print()
-            return False
-        
-        # Display results
-        print("\n" + "="*70)
-        print("✓ EXTRACTION SUCCESSFUL")
-        print("="*70)
-        print(f"Company: {result.get('company_name', 'Unknown')}")
-        print(f"Period: {result.get('period', {}).get('text', 'N/A')}")
-        print(f"Currency: {result.get('currency', 'N/A')}")
-        print(f"Unit: {result.get('unit', 'N/A')}")
-        
-        # Display results summary  
-        print(f"\n📊 EXTRACTION SUMMARY:")
-        print(f"  • Company: {result.get('metadata', {}).get('entity_name', 'Unknown')}")
-        print(f"  • Currency: {result.get('metadata', {}).get('currency', {}).get('currency', 'Unknown')} ({result.get('metadata', {}).get('currency', {}).get('unit', 'Unknown')})")
-        print(f"  • Periods: {len(result.get('metadata', {}).get('periods', []))}")
-        print(f"  • Pages: {result.get('processing_info', {}).get('total_pages', 0)}")
-        print(f"  • Fields in Schema: {result.get('processing_info', {}).get('total_fields_in_schema', 0)}")
-        print(f"  • Fields Extracted: {result.get('processing_info', {}).get('total_fields_extracted', 0)}")
-        print(f"  • Extraction Rate: {result.get('processing_info', {}).get('extraction_rate', '0%')}")
-        print(f"  • Confidence: {result.get('confidence_score', 0):.2%}")
-        
-        print(f"\n📊 STATEMENTS EXTRACTED:")
-        for statement, data in result.get('financial_statements', {}).items():
-            found = len([v for v in data.values() if v is not None]) if isinstance(data, dict) else 0
-            total = len(data) if isinstance(data, dict) else 0
-            print(f"  ✓ {statement.replace('_', ' ').title()}: {found}/{total} fields")
-            
-            # Show sample values
-            if isinstance(data, dict):
-                sample_count = 0
-                for key, value in data.items():
-                    if value is not None and sample_count < 3:
-                        print(f"      - {key}: {value}")
-                        sample_count += 1
-        
-        print(f"\n✅ VALIDATION:")
-        for key, passed in result.get('validation', {}).items():
-            if isinstance(passed, dict):
-                status = "✓ PASSED" if passed.get('passed', False) else "✗ FAILED"
-            else:
-                status = "✓ PASSED" if passed else "✗ FAILED"
-            print(f"  {status} - {key.replace('_', ' ').title()}")
-        
-        print(f"\n💾 OUTPUT:")
-        print(f"  • JSON: data/processed/extracted_json/")
-        print(f"  • Logs: logs/")
-        print("="*70 + "\n")
-        
-        return True
-        
-    except Exception as e:
-        print(f"\n❌ ERROR: {str(e)}\n")
-        logger.error(f"Error processing {pdf_path}: {str(e)}", exc_info=True)
-        return False
-
-
-def process_batch(pdf_files, pipeline):
-    """Process multiple PDF files."""
-    print("\n" + "="*70)
-    print(f"BATCH PROCESSING: {len(pdf_files)} FILES")
-    print("="*70 + "\n")
-    
-    successful = 0
-    failed = 0
-    
-    for i, pdf_path in enumerate(pdf_files, 1):
-        print(f"\n[{i}/{len(pdf_files)}] Processing: {pdf_path.name}")
-        print("-"*70)
-        
-        try:
-            result = pipeline.extract_from_pdf(str(pdf_path))
-            
-            if 'error' in result:
-                print(f"❌ Failed: {result['error']}")
-                failed += 1
-            else:
-                print(f"✓ Success: {len(result.get('data', {}))} statements extracted")
-                successful += 1
-                
-        except Exception as e:
-            print(f"❌ Error: {str(e)}")
-            failed += 1
-    
-    # Summary
-    print("\n" + "="*70)
-    print("BATCH PROCESSING COMPLETE")
-    print("="*70)
-    print(f"Total Files: {len(pdf_files)}")
-    print(f"✓ Successful: {successful}")
-    print(f"❌ Failed: {failed}")
-    print(f"Success Rate: {(successful/len(pdf_files)*100):.1f}%")
-    print(f"\n💾 Results saved to: data/processed/extracted_json/")
-    print("="*70 + "\n")
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 
 def main():
-    """Main function."""
-    print_banner()
+    """Main execution function."""
     
-    # Check setup
-    if not check_setup():
-        sys.exit(1)
+    print("\n" + "="*80)
+    print("🚀 TWO-STAGE FINANCIAL STATEMENT EXTRACTOR")
+    print("="*80)
+    print("📄 Stage A: Intelligent Page Location (ToC-based)")
+    print("📊 Stage B: Structured Data Extraction (Bank/Group + Year1/Year2)")
+    print("✅ Works with any bank annual report")
+    print("="*80 + "\n")
     
-    # Find PDFs
-    pdf_files = find_pdfs()
+    # Initialize extractor
+    pipeline = TwoStagePipeline()
+    
+    # Define PDF paths
+    data_dir = Path(__file__).parent / "data" / "raw"
+    
+    # Available PDFs
+    pdf_files = {
+        "1": data_dir / "pabc" / "pabc.pdf",
+        "2": data_dir / "hnb" / "hnb.pdf",
+        "3": data_dir / "commercial" / "Commerical.pdf",
+        "4": data_dir / "dfcc" / "DFCC.pdf",
+        "5": data_dir / "janashakthi" / "janashakthi.pdf",
+        "6": data_dir / "jhonkeels" / "jhonkeells.pdf",
+    }
     
     # Display menu
-    pdf_files = display_menu(pdf_files)
-    if pdf_files is None:
-        sys.exit(0)
+    print("Select a PDF to extract:")
+    print("1. Pan Asia Banking Corporation (PABC)")
+    print("2. HNB Bank")
+    print("3. Commercial Bank")
+    print("4. DFCC Bank")
+    print("5. Janashakthi Bank")
+    print("6. John Keells")
+    print("7. Custom path")
     
-    # Get user choice
-    selected_files, mode = get_user_choice(pdf_files)
+    choice = input("\nEnter choice (1-7): ").strip()
     
-    if selected_files is None:
-        print("\n👋 Goodbye!\n")
-        sys.exit(0)
+    if choice in pdf_files:
+        pdf_path = pdf_files[choice]
+    elif choice == "7":
+        custom_path = input("Enter PDF path: ").strip()
+        pdf_path = Path(custom_path)
+    else:
+        print("❌ Invalid choice")
+        return
     
-    # Initialize pipeline
-    print("\n🔧 Initializing extraction pipeline...")
+    if not pdf_path.exists():
+        print(f"❌ PDF not found: {pdf_path}")
+        return
+    
+    # Extract
     try:
-        pipeline = ExtractionPipeline("config/settings.yaml")
-        print("✓ Pipeline ready\n")
+        logger.info(f"\n🚀 Starting extraction from: {pdf_path.name}\n")
+        
+        result = pipeline.extract(str(pdf_path), save_intermediates=True)
+        
+        # Get canonical output
+        canonical_output = result.get('canonical_output', {})
+        
+        # Save user-friendly output
+        output_dir = Path(__file__).parent / "data" / "processed" / "extracted_json"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_file = output_dir / f"{pdf_path.stem}_extracted.json"
+        
+        with open(output_file, 'w') as f:
+            json.dump(canonical_output, f, indent=2)
+        
+        # Display summary
+        print("\n" + "="*80)
+        print("✅ EXTRACTION COMPLETED SUCCESSFULLY")
+        print("="*80)
+        
+        for entity in ["Bank", "Group"]:
+            for year in ["Year1", "Year2"]:
+                year_data = canonical_output.get(entity, {}).get(year, {})
+                if not year_data:
+                    continue
+                    
+                income_fields = len(year_data.get('Income_Statement', {}))
+                position_fields = len(year_data.get('Financial Position Statement', {}))
+                cashflow_fields = len(year_data.get('Cash Flow Statement', {}))
+                total_fields = income_fields + position_fields + cashflow_fields
+                
+                if total_fields > 0:
+                    print(f"📊 {entity} {year}: {total_fields} fields extracted")
+                    print(f"   - Income Statement: {income_fields}")
+                    print(f"   - Financial Position: {position_fields}")
+                    print(f"   - Cash Flow: {cashflow_fields}")
+        
+        print(f"\n💾 Results saved to: {output_file}")
+        print("="*80 + "\n")
+        
     except Exception as e:
-        print(f"\n❌ Failed to initialize pipeline: {str(e)}\n")
-        sys.exit(1)
-    
-    # Process files
-    if mode == 'single':
-        success = process_single_pdf(selected_files[0], pipeline)
-        sys.exit(0 if success else 1)
-    else:  # batch
-        process_batch(selected_files, pipeline)
-        sys.exit(0)
+        logger.error(f"❌ Extraction failed: {e}", exc_info=True)
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\n\n⚠️  Process interrupted by user\n")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n❌ Unexpected error: {str(e)}\n")
-        sys.exit(1)
+    main()

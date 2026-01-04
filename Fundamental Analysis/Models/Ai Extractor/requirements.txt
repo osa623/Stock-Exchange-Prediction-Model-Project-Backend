@@ -23,10 +23,14 @@ python-dateutil==2.8.2
 camelot-py==0.11.0
 tabula-py==2.9.0
 
-# Text Processing
+# Text Processing and NLP
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.25.0
 regex==2023.12.25
+rapidfuzz==3.6.1
+sentence-transformers==2.3.1
+transformers==4.36.2
+torch==2.1.2
 
 # Configuration
 PyYAML==6.0.1
@@ -35,6 +39,10 @@ python-dotenv==1.0.1
 # Database (optional)
 psycopg2-binary==2.9.9
 SQLAlchemy==2.0.25
+
+# Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
 
 # Utilities
 tqdm==4.66.1

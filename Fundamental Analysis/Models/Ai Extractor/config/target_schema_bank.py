@@ -1,7 +1,6 @@
-TARGET_FIELDS = {
 
+STATEMENT_FIELDS = {
     "Income_Statement": [
-
         "Gross income",
         "Interest income",
         "Interest expenses",
@@ -143,5 +142,23 @@ TARGET_FIELDS = {
         "Cash and cash equivalents",
         "Placements with banks"
     ]
-
 }
+
+# Target structure: Bank and Group, each with Year1 and Year2
+TARGET_FIELDS = {
+    "Bank": {
+        "Year1": STATEMENT_FIELDS,
+        "Year2": STATEMENT_FIELDS
+    },
+    "Group": {
+        "Year1": STATEMENT_FIELDS,
+        "Year2": STATEMENT_FIELDS
+    }
+}
+
+# Mandatory sections to extract (ignore all others)
+MANDATORY_SECTIONS = [
+    "Income_Statement",
+    "Financial Position Statement", 
+    "Cash Flow Statement"
+]

@@ -12,9 +12,8 @@ INCOME_STATEMENT_KEYWORDS = [
     "statement of profit and loss and other comprehensive income"
 ]
 
-# Keywords to identify Balance Sheet/Financial Position Statement
+# Keywords to identify Financial Position Statement
 BALANCE_SHEET_KEYWORDS = [
-    "balance sheet",
     "statement of financial position",
     "financial position",
     "statement of assets and liabilities",

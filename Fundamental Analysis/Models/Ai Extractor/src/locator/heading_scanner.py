@@ -23,17 +23,26 @@ class HeadingScanner:
     
     def __init__(self):
         """Initialize heading scanner with keyword patterns."""
-        # Import keywords from config
-        from config.keywords import (
-            INCOME_STATEMENT_KEYWORDS,
-            FINANCIAL_POSITION_KEYWORDS,
-            CASH_FLOW_KEYWORDS
-        )
-        
+        # Define statement keywords directly
         self.statement_keywords = {
-            'Income_Statement': INCOME_STATEMENT_KEYWORDS,
-            'Financial Position Statement': FINANCIAL_POSITION_KEYWORDS,
-            'Cash Flow Statement': CASH_FLOW_KEYWORDS
+            'Income_Statement': [
+                'income statement',
+                'statement of profit or loss',
+                'statement of comprehensive income',
+                'profit and loss',
+                'statement of income'
+            ],
+            'Financial Position Statement': [
+                'statement of financial position',
+                'balance sheet',
+                'statement of assets and liabilities',
+                'financial position'
+            ],
+            'Cash Flow Statement': [
+                'statement of cash flows',
+                'cash flow statement',
+                'statement of cash flow'
+            ]
         }
         
         # Heading characteristics

@@ -8,7 +8,7 @@ Interprets table columns to identify:
 """
 
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
 
@@ -72,22 +72,64 @@ class ColumnInterpreter:
     
     def interpret_columns(
         self,
-        header_rows: List[List[str]],
+        table_rows: List[List[str]],
         data_sample: Optional[List[List[str]]] = None
-    ) -> Dict[int, ColumnInfo]:
+    ) -> Dict[str, Any]:
         """
-        Interpret columns based on headers and optionally data sample.
+        Interpret columns from table rows to identify Bank/Group and Year columns.
         
         Args:
-            header_rows: List of header rows (typically first 1-3 rows of table)
-                        Each row is a list of cell values
-            data_sample: Optional sample of data rows for validation
+            table_rows: All table rows including headers
+            data_sample: Optional sample data rows
         
         Returns:
-            Dictionary mapping column index to ColumnInfo
+            Dict with entity_cols, year_cols mapping column indices to (entity, year)
         """
-        # Combine header rows into single header per column
-        num_columns = max(len(row) for row in header_rows) if header_rows else 0
+        if not table_rows or len(table_rows) < 2:
+            return {'entity_cols': {}, 'year_cols': {}}
+        
+        # Combine first 2-3 rows as headers (multi-line headers common)
+        header_text = []
+        for row in table_rows[:3]:
+            header_text.append([str(cell).lower() if cell else '' for cell in row])
+        
+        entity_cols = {}  # {col_idx: 'Bank' or 'Group'}
+        year_cols = {}    # {col_idx: 2023, 2024, etc}
+        
+        # Analyze each column
+        for col_idx in range(len(header_text[0])):
+            col_headers = [row[col_idx] if col_idx < len(row) else '' for row in header_text]
+            combined = ' '.join(col_headers)
+            
+            # Skip label/description columns (first column usually)
+            if col_idx == 0:
+                continue
+            
+            # Detect Bank vs Group
+            entity = None
+            if 'bank' in combined or 'company' in combined:
+                entity = 'Bank'
+            elif 'group' in combined or 'consolidated' in combined:
+                entity = 'Group'
+            
+            # Detect year
+            import re
+            years = re.findall(r'\b(20\d{2})\b', combined)
+            year = int(years[0]) if years else None
+            
+            # If we found a year but no entity, default to 'Bank' (standalone entity)
+            if year and not entity:
+                entity = 'Bank'
+            
+            if entity:
+                entity_cols[col_idx] = entity
+            if year:
+                year_cols[col_idx] = year
+        
+        return {
+            'entity_cols': entity_cols,
+            'year_cols': year_cols
+        }
         
         combined_headers = []
         for col_idx in range(num_columns):

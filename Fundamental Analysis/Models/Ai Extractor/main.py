@@ -26,11 +26,12 @@ def main():
     print("📷 FINANCIAL STATEMENT PAGE IMAGE EXTRACTOR")
     print("="*80)
     print("📄 Locates financial statement pages and saves them as images")
+    print("✅ Verifies pages contain actual tables before saving")
     print("="*80 + "\n")
     
     # Initialize components
     page_locator = PageLocator(min_confidence=0.5)
-    image_saver = StatementImageSaver(output_base_dir="app/statement_images")
+    image_saver = StatementImageSaver(output_base_dir="app/statement_images", verify_tables=True)
     
     # Define PDF paths
     data_dir = Path(__file__).parent / "data" / "raw"

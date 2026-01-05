@@ -13,6 +13,7 @@ const PDFDetail = () => {
   const [statements, setStatements] = useState([]);
   const [selectedStatements, setSelectedStatements] = useState(new Set());
   const [selectedImages, setSelectedImages] = useState({}); // Track selected image per statement
+  const [selectedPages, setSelectedPages] = useState({}); // Track selected pages per statement type
   const [loading, setLoading] = useState(true);
   const [extracting, setExtracting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -56,6 +57,64 @@ const PDFDetail = () => {
       ...prev,
       [statementType]: imageUrl
     }));
+  };
+
+  const handlePageSelect = (statementType, pageNum) => {
+    setSelectedPages((prev) => {
+      const currentPages = prev[statementType] || [];
+      const newPages = currentPages.includes(pageNum)
+        ? currentPages.filter(p => p !== pageNum)
+        : [...currentPages, pageNum];
+      
+      return {
+        ...prev,
+        [statementType]: newPages
+      };
+    });
+  };
+
+  const handleExtractData = async () => {
+    // Check if any pages are selected
+    const totalSelectedPages = Object.values(selectedPages).reduce(
+      (sum, pages) => sum + (pages?.length || 0), 
+      0
+    );
+
+    if (totalSelectedPages === 0) {
+      alert('Please select at least one page to extract data from');
+      return;
+    }
+
+    try {
+      setExtracting(true);
+      setError(null);
+      
+      const result = await pdfService.extractDataFromPages(pdfId, selectedPages);
+      
+      // Build detailed summary message
+      const summary = result.extraction_summary || {};
+      let summaryText = 'Data extracted successfully!\n\n';
+      
+      summaryText += '📊 Extraction Summary:\n';
+      summaryText += `Bank Year1: ${summary.Bank?.Year1 || 0} fields\n`;
+      summaryText += `Bank Year2: ${summary.Bank?.Year2 || 0} fields\n`;
+      summaryText += `Group Year1: ${summary.Group?.Year1 || 0} fields\n`;
+      summaryText += `Group Year2: ${summary.Group?.Year2 || 0} fields\n\n`;
+      
+      summaryText += `📁 Output Files:\n`;
+      summaryText += `JSON: ${result.json_file}\n`;
+      summaryText += `Excel: ${result.excel_file}\n\n`;
+      
+      summaryText += `📂 Location: ${result.output_dir}`;
+      
+      alert(summaryText);
+      
+    } catch (err) {
+      setError(err.message || 'Failed to extract data');
+      alert('Error extracting data: ' + (err.message || 'Unknown error'));
+    } finally {
+      setExtracting(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -129,17 +188,33 @@ const PDFDetail = () => {
               Extracted Statements: {statements.length}
             </h2>
             <p className="text-gray-600 text-sm">
-              Select one or more statements to continue
+              Select pages from statements to extract data
             </p>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-gray-600">
-              {selectedStatements.size} selected
-            </span>
+            <div className="text-right">
+              <div className="text-gray-600 text-sm">
+                {Object.values(selectedPages).reduce((sum, pages) => sum + (pages?.length || 0), 0)} pages selected
+              </div>
+              <div className="text-gray-500 text-xs">
+                {selectedStatements.size} statements marked
+              </div>
+            </div>
+            <button
+              onClick={handleExtractData}
+              disabled={Object.values(selectedPages).reduce((sum, pages) => sum + (pages?.length || 0), 0) === 0 || extracting}
+              className={`btn-primary ${
+                Object.values(selectedPages).reduce((sum, pages) => sum + (pages?.length || 0), 0) === 0 || extracting
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
+              }`}
+            >
+              {extracting ? 'Extracting...' : 'Extract Data'}
+            </button>
             <button
               onClick={handleSubmit}
               disabled={selectedStatements.size === 0 || submitting}
-              className={`btn-primary ${
+              className={`btn-secondary ${
                 selectedStatements.size === 0 || submitting
                   ? 'opacity-50 cursor-not-allowed'
                   : ''
@@ -169,6 +244,8 @@ const PDFDetail = () => {
               onToggleSelect={() => toggleStatementSelection(index)}
               selectedImage={selectedImages[statement.type]}
               onImageSelect={handleImageSelect}
+              selectedPages={selectedPages[statement.type] || []}
+              onPageSelect={handlePageSelect}
             />
           ))}
         </div>

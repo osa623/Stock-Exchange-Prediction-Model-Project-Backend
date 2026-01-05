@@ -55,6 +55,19 @@ export const pdfService = {
       throw error;
     }
   },
+
+  // Extract data from selected pages
+  extractDataFromPages: async (pdfId, selectedPages) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/extract-data`, {
+        selectedPages,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error extracting data from pages:', error);
+      throw error;
+    }
+  },
 };
 
 export default api;

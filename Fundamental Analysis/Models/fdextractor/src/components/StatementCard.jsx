@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const StatementCard = ({ statement, isSelected, onToggleSelect, selectedImage, onImageSelect }) => {
+const StatementCard = ({ statement, isSelected, onToggleSelect, selectedImage, onImageSelect, selectedPages = [], onPageSelect }) => {
   const { type, data, confidence, images = [] } = statement;
   const [showImages, setShowImages] = useState(images.length > 0);
 
@@ -17,6 +17,17 @@ const StatementCard = ({ statement, isSelected, onToggleSelect, selectedImage, o
     if (confidence >= 0.8) return 'text-green-600';
     if (confidence >= 0.5) return 'text-yellow-600';
     return 'text-red-600';
+  };
+
+  const isPageSelected = (pageNum) => {
+    return selectedPages.includes(pageNum);
+  };
+
+  const handlePageCheckboxClick = (e, pageNum) => {
+    e.stopPropagation(); // Prevent triggering image selection
+    if (onPageSelect) {
+      onPageSelect(type, pageNum);
+    }
   };
 
   return (
@@ -84,6 +95,34 @@ const StatementCard = ({ statement, isSelected, onToggleSelect, selectedImage, o
                   }`}
                   onClick={() => onImageSelect(type, image.url)}
                 >
+                  {/* Page Selection Checkbox */}
+                  <div 
+                    className="absolute top-2 left-2 z-10"
+                    onClick={(e) => handlePageCheckboxClick(e, image.page)}
+                  >
+                    <div
+                      className={`w-6 h-6 border-2 rounded flex items-center justify-center cursor-pointer transition-all ${
+                        isPageSelected(image.page) 
+                          ? 'bg-black border-black' 
+                          : 'bg-white border-gray-400 hover:border-black'
+                      }`}
+                    >
+                      {isPageSelected(image.page) && (
+                        <svg
+                          className="w-4 h-4 text-white"
+                          fill="none"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  
                   <img
                     src={image.url}
                     alt={`Page ${image.page}`}
@@ -96,7 +135,7 @@ const StatementCard = ({ statement, isSelected, onToggleSelect, selectedImage, o
                     Page {image.page}
                   </div>
                   {selectedImage === image.url && (
-                    <div className="absolute top-2 left-2 bg-black text-white p-1 rounded-full">
+                    <div className="absolute bottom-2 left-2 bg-black text-white p-1 rounded-full">
                       <svg
                         className="w-4 h-4"
                         fill="none"

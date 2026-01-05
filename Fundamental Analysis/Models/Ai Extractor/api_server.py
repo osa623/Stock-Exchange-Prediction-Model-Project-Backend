@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 # Configuration
 RAW_DATA_PATH = Path(__file__).parent / "data" / "raw"
 PROCESSED_DATA_PATH = Path(__file__).parent / "data" / "processed" / "extracted_json"
-IMAGES_PATH = Path(__file__).parent / "data" / "temp" / "statement_images"
+IMAGES_PATH = Path(__file__).parent / "app" / "statement_images"
 
 # Ensure paths exist
 RAW_DATA_PATH.mkdir(parents=True, exist_ok=True)

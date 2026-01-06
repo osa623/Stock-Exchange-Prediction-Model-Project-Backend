@@ -15,6 +15,20 @@ import io
 import json
 import pandas as pd
 from datetime import datetime
+import re
+
+# Configure logging first
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Check for Tesseract
+try:
+    import pytesseract
+    TESSERACT_AVAILABLE = True
+    logger.info("Tesseract OCR is available")
+except ImportError:
+    TESSERACT_AVAILABLE = False
+    logger.warning("pytesseract not available, using basic text extraction only")
 
 # Add parent directory to path to import from src
 sys.path.append(str(Path(__file__).parent))
@@ -32,10 +46,6 @@ from config.target_schema_bank import STATEMENT_FIELDS, TARGET_FIELDS, MANDATORY
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 # Configuration
 RAW_DATA_PATH = Path(__file__).parent / "data" / "raw"
 PROCESSED_DATA_PATH = Path(__file__).parent / "data" / "processed" / "extracted_json"
@@ -49,239 +59,228 @@ IMAGES_PATH.mkdir(parents=True, exist_ok=True)
 
 def extract_data_from_selected_pages(pdf_path, pdf_id, selected_pages):
     """
-    Extract table data from selected pages using schema-based mapping.
+    Extract text from selected pages using OCR and text extraction.
     
     Args:
         pdf_path: Path to the PDF file
         pdf_id: Unique identifier for the PDF
         selected_pages: Dict with statement types as keys and list of page numbers as values
-                       Example: {'income': [5, 6], 'balance': [7, 8], 'cashflow': [9]}
+                       Example: {'income': [5, 6], 'balance': [7], 'cashflow': [9]}
     
     Returns:
-        Dictionary with extracted data structured according to TARGET_FIELDS schema:
-        Bank -> Year1/Year2 -> Statement -> Fields with values
-        Group -> Year1/Year2 -> Statement -> Fields with values
+        Dictionary with extracted text data organized by statement and page
     """
-    logger.info(f"Extracting data from selected pages: {selected_pages}")
+    logger.info(f"Extracting data from selected pages using OCR: {selected_pages}")
     
-    # Initialize components
-    table_extractor = TableExtractor()
-    mapping_engine = MappingEngine(fuzzy_threshold=85.0)
-    column_interpreter = ColumnInterpreter()
-    numeric_normalizer = NumericNormalizer()
-    
-    # Map frontend statement types to schema types
-    statement_type_mapping = {
-        'income': 'Income_Statement',
-        'balance': 'Financial Position Statement',
+    # Map frontend statement types to readable names
+    statement_names = {
+        'income': 'Income Statement',
+        'balance': 'Balance Sheet',
         'cashflow': 'Cash Flow Statement'
     }
     
-    # Initialize result structure according to TARGET_FIELDS
+    # Initialize result structure
     extracted_data = {
         "pdf_id": pdf_id,
         "extraction_date": datetime.now().isoformat(),
-        "data": {
-            "Bank": {
-                "Year1": {},
-                "Year2": {}
-            },
-            "Group": {
-                "Year1": {},
-                "Year2": {}
-            }
-        },
-        "metadata": {
-            "pages_processed": {},
-            "fields_found": {},
-            "mapping_stats": {}
-        }
+        "statements": {}
     }
     
-    # Process each statement type
-    for frontend_type, pages in selected_pages.items():
-        if not pages:
-            continue
+    try:
+        doc = fitz.open(pdf_path)
         
-        schema_type = statement_type_mapping.get(frontend_type)
-        if not schema_type:
-            logger.warning(f"Unknown statement type: {frontend_type}")
-            continue
-        
-        logger.info(f"\n{'='*80}")
-        logger.info(f"Processing {schema_type} from pages: {pages}")
-        logger.info(f"{'='*80}\n")
-        
-        # Initialize statement structure in all entities and years
-        for entity in ['Bank', 'Group']:
-            for year in ['Year1', 'Year2']:
-                extracted_data['data'][entity][year][schema_type] = {}
-        
-        extracted_data['metadata']['pages_processed'][schema_type] = pages
-        
-        # Extract and process tables from all pages for this statement
-        all_table_rows = []
-        
-        for page_num in pages:
-            page_idx = page_num - 1
-            logger.info(f"Extracting from page {page_num}")
+        # Process each statement type
+        for statement_type, pages in selected_pages.items():
+            if not pages:
+                continue
             
-            # Open PDF with pdfplumber to get both text and tables
-            import pdfplumber
-            with pdfplumber.open(pdf_path) as pdf_doc:
-                if page_idx >= len(pdf_doc.pages):
-                    logger.warning(f"Page {page_num} not found in PDF")
+            statement_name = statement_names.get(statement_type, statement_type)
+            logger.info(f"\n{'='*80}")
+            logger.info(f"Processing {statement_name} from pages: {pages}")
+            logger.info(f"{'='*80}\n")
+            
+            # Initialize statement data
+            extracted_data['statements'][statement_type] = {}
+            
+            # Process each page
+            for page_num in pages:
+                page_idx = page_num - 1
+                
+                if page_idx >= len(doc) or page_idx < 0:
+                    logger.warning(f"Page {page_num} is out of range, skipping")
                     continue
                 
-                page = pdf_doc.pages[page_idx]
+                logger.info(f"\nExtracting from page {page_num}")
                 
-                # Extract text to get field names
-                page_text = page.extract_text()
-                if not page_text:
-                    logger.warning(f"No text found on page {page_num}")
-                    continue
+                page = doc[page_idx]
+                page_key = f'page_{page_num}'
                 
-                # Extract tables to get values
-                page_tables = page.extract_tables()
+                # Extract text using PyMuPDF (built-in text extraction)
+                text_content = page.get_text("text")
                 
-                logger.info(f"  Page text length: {len(page_text)} chars")
-                logger.info(f"  Tables found: {len(page_tables)}")
+                # Also try to get structured text (blocks)
+                blocks = page.get_text("dict")["blocks"]
                 
-                # Parse text line by line to match with table values
-                text_lines = page_text.split('\n')
+                # Extract text with better structure
+                extracted_lines = []
                 
-                # Find table values
-                table_values = {}
-                for table in page_tables:
-                    for row in table:
-                        if row and len(row) >= 2:
-                            # Get note reference and value
-                            note = str(row[0]).strip() if row[0] else ""
-                            value = str(row[1]).strip() if row[1] else ""
-                            if note and value:
-                                table_values[note] = value
+                for block in blocks:
+                    if block.get("type") == 0:  # Text block
+                        for line in block.get("lines", []):
+                            line_text = ""
+                            for span in line.get("spans", []):
+                                line_text += span.get("text", "")
+                            
+                            if line_text.strip():
+                                extracted_lines.append(line_text.strip())
                 
-                logger.info(f"  Extracted {len(table_values)} table values")
-                
-                # Match text lines with table values
-                for line in text_lines:
-                    line = line.strip()
-                    if not line or len(line) < 5:
-                        continue
+                # If no structured text, use OCR on the page image
+                if not extracted_lines or len(extracted_lines) < 5:
+                    logger.info(f"  Limited text found, attempting OCR...")
                     
-                    # Skip header lines
-                    if any(skip in line.lower() for skip in ['note', 'rs.', '2024', '2023', 'page', 'annual report']):
-                        continue
-                    
-                    # Try to extract field name and values from the line
-                    # Format: "Field Name [Note] Value1 Value2"
-                    parts = line.split()
-                    if len(parts) < 2:
-                        continue
-                    
-                    # Check if line contains numbers (values)
-                    has_numbers = any(char.isdigit() or char in '(),.' for part in parts[-2:] for char in part)
-                    if not has_numbers:
-                        continue
-                    
-                    # Extract field name (everything except last 2-3 parts which are values/notes)
-                    values_parts = []
-                    field_parts = []
-                    
-                    for i, part in enumerate(parts):
-                        # Check if this looks like a value (has digits, commas, parentheses)
-                        if any(c in part for c in '0123456789(),'):
-                            values_parts = parts[i:]
-                            field_parts = parts[:i]
-                            break
-                    
-                    if not field_parts:
-                        continue
-                    
-                    field_name = ' '.join(field_parts)
-                    
-                    # Clean field name - remove note references
-                    import re
-                    field_name = re.sub(r'\b\d+\b', '', field_name).strip()
-                    
-                    if not field_name or len(field_name) < 3:
-                        continue
-                    
-                    logger.info(f"  Processing: '{field_name}'")
-                    
-                    # Map to canonical field
-                    mapping_result = mapping_engine.map_label(field_name, schema_type)
-                    
-                    if mapping_result.canonical_key:
-                        canonical_field = mapping_result.canonical_key
-                        logger.info(f"    ✓ Mapped to '{canonical_field}' ({mapping_result.match_method})")
+                    try:
+                        # Render page to image
+                        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+                        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                         
-                        # Extract values from the line
-                        for val_idx, value_str in enumerate(values_parts):
-                            value_str = value_str.strip()
-                            if not value_str or value_str.isdigit() and len(value_str) <= 2:  # Skip note numbers
-                                continue
-                            
-                            # Check if it's a valid value
-                            if not any(c in value_str for c in '0123456789'):
-                                continue
-                            
-                            # Normalize value
-                            normalized_value = numeric_normalizer.normalize(value_str)
-                            if not normalized_value or normalized_value == "0":
-                                continue
-                            
-                            logger.info(f"      Value {val_idx}: {value_str} -> {normalized_value}")
-                            
-                            # Determine entity and year based on value position
-                            # Typically: Value1 = Year1, Value2 = Year2 (or Bank/Group)
-                            # Common format: Bank2024, Bank2023, Group2024, Group2023
-                            if val_idx == 0:
-                                entity = 'Bank'
-                                year_key = 'Year1'
-                            elif val_idx == 1:
-                                entity = 'Bank'
-                                year_key = 'Year2'
-                            elif val_idx == 2:
-                                entity = 'Group'
-                                year_key = 'Year1'
-                            elif val_idx == 3:
-                                entity = 'Group'
-                                year_key = 'Year2'
-                            else:
-                                continue
-                            
-                            # Store in data structure
-                            if canonical_field not in extracted_data['data'][entity][year_key][schema_type]:
-                                extracted_data['data'][entity][year_key][schema_type][canonical_field] = normalized_value
-                                logger.info(f"        Stored in {entity}/{year_key}")
-                    else:
-                        logger.debug(f"    ✗ No mapping for '{field_name}'")
+                        # Use OCR if available
+                        if TESSERACT_AVAILABLE:
+                            ocr_text = pytesseract.image_to_string(img)
+                            extracted_lines = [line.strip() for line in ocr_text.split('\n') if line.strip()]
+                            logger.info(f"  OCR extracted {len(extracted_lines)} lines")
+                        else:
+                            logger.warning("  pytesseract not available, using basic text extraction only")
+                    
+                    except Exception as e:
+                        logger.error(f"  OCR failed: {str(e)}")
                 
-        # Log extraction stats for this statement
-        fields_found = {
-            'Bank_Year1': len(extracted_data['data']['Bank']['Year1'].get(schema_type, {})),
-            'Bank_Year2': len(extracted_data['data']['Bank']['Year2'].get(schema_type, {})),
-            'Group_Year1': len(extracted_data['data']['Group']['Year1'].get(schema_type, {})),
-            'Group_Year2': len(extracted_data['data']['Group']['Year2'].get(schema_type, {}))
-        }
-        extracted_data['metadata']['fields_found'][schema_type] = fields_found
+                # Parse lines into key-value pairs with year-based structure
+                parsed_data = {}
+                
+                # Try to detect the year from the document
+                current_year = None
+                for line in extracted_lines[:20]:  # Check first 20 lines for year
+                    year_match = re.search(r'(20\d{2})', line)
+                    if year_match:
+                        current_year = int(year_match.group(1))
+                        break
+                
+                # Default to current year if not found
+                if not current_year:
+                    current_year = datetime.now().year
+                
+                previous_year = current_year - 1
+                logger.info(f"  Detected years: {current_year}, {previous_year}")
+                
+                # Helper function to check if a line is likely a numeric value
+                def is_numeric_value(text):
+                    # Remove common separators and check if it's a number
+                    cleaned = text.replace(',', '').replace('(', '').replace(')', '').replace('-', '').replace('.', '').strip()
+                    return cleaned.isdigit() or (cleaned and all(c.isdigit() or c in '.,()-' for c in text))
+                
+                i = 0
+                while i < len(extracted_lines):
+                    line = extracted_lines[i].strip()
+                    
+                    # Skip very short lines
+                    if len(line) < 3:
+                        i += 1
+                        continue
+                    
+                    # Skip standalone page numbers
+                    if re.match(r'^\d+$', line) and len(line) < 4:
+                        i += 1
+                        continue
+                    
+                    # Check if line has multiple whitespace-separated parts (data on same line)
+                    parts = re.split(r'\s{2,}|\t+', line)
+                    
+                    if len(parts) >= 2 and is_numeric_value(parts[1]):
+                        # Data is on the same line: "Label    Value1    Value2"
+                        key = parts[0].strip()
+                        parsed_data[key] = {
+                            str(current_year): parts[1].strip()
+                        }
+                        
+                        # Store additional values if present (previous year)
+                        if len(parts) > 2 and is_numeric_value(parts[2]):
+                            parsed_data[key][str(previous_year)] = parts[2].strip()
+                        
+                        i += 1
+                        
+                    elif not is_numeric_value(line) and i + 1 < len(extracted_lines):
+                        # Current line is a label, look ahead for values
+                        key = line
+                        
+                        # Look at next lines to find numeric values
+                        j = i + 1
+                        values_found = []
+                        
+                        # Skip note numbers (single or double digit numbers)
+                        while j < len(extracted_lines):
+                            next_line = extracted_lines[j].strip()
+                            
+                            # Skip note numbers (typically 1-2 digits)
+                            if re.match(r'^\d{1,2}$', next_line):
+                                j += 1
+                                continue
+                            
+                            # If it's a numeric value, collect it
+                            if is_numeric_value(next_line) and len(next_line) > 2:
+                                values_found.append(next_line)
+                                j += 1
+                                # Collect up to 2 values (current year, previous year)
+                                if len(values_found) >= 2:
+                                    break
+                            else:
+                                # Not a numeric value, stop looking
+                                break
+                        
+                        # Store the key-value pair with year structure
+                        if values_found:
+                            parsed_data[key] = {
+                                str(current_year): values_found[0]
+                            }
+                            # Store second value if present (usually previous year)
+                            if len(values_found) > 1:
+                                parsed_data[key][str(previous_year)] = values_found[1]
+                        else:
+                            # No values found, store empty
+                            parsed_data[key] = {}
+                        
+                        i = j
+                    else:
+                        i += 1
+                
+                logger.info(f"  Extracted {len(parsed_data)} data items from page {page_num}")
+                
+                # Store the extracted data
+                extracted_data['statements'][statement_type][page_key] = {
+                    "raw_text_lines": len(extracted_lines),
+                    "parsed_items": len(parsed_data),
+                    "data": parsed_data,
+                    "full_text": "\n".join(extracted_lines) if len(extracted_lines) < 500 else "\n".join(extracted_lines[:500]) + "\n... (truncated)"
+                }
         
-        logger.info(f"\n{schema_type} extraction complete:")
-        logger.info(f"  Bank Year1: {fields_found['Bank_Year1']} fields")
-        logger.info(f"  Bank Year2: {fields_found['Bank_Year2']} fields")
-        logger.info(f"  Group Year1: {fields_found['Group_Year1']} fields")
-        logger.info(f"  Group Year2: {fields_found['Group_Year2']} fields")
+        doc.close()
+        
+    except Exception as e:
+        logger.error(f"Error during extraction: {str(e)}", exc_info=True)
+        raise
+    
+    logger.info(f"\n{'='*80}")
+    logger.info("Extraction complete!")
+    logger.info(f"{'='*80}\n")
     
     return extracted_data
 
 
 def save_extracted_data_to_files(extracted_data, pdf_id):
     """
-    Save extracted data to both JSON and Excel files following TARGET_FIELDS schema.
+    Save extracted data to both JSON and Excel files.
     
     Args:
-        extracted_data: Dictionary containing extracted financial data
+        extracted_data: Dictionary containing extracted text data
         pdf_id: Unique identifier for the PDF
     
     Returns:
@@ -290,85 +289,56 @@ def save_extracted_data_to_files(extracted_data, pdf_id):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # JSON file
-    json_filename = f"{pdf_id}_extracted_{timestamp}.json"
+    json_filename = f"{pdf_id}_ocr_{timestamp}.json"
     json_path = PROCESSED_DATA_PATH / json_filename
     
-    with open(json_path, 'w') as f:
-        json.dump(extracted_data, f, indent=2)
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(extracted_data, f, indent=2, ensure_ascii=False)
     
     logger.info(f"Saved JSON file: {json_path}")
     
-    # Excel file with sheets for Bank and Group, each with Year1 and Year2
-    excel_filename = f"{pdf_id}_extracted_{timestamp}.xlsx"
+    # Excel file
+    excel_filename = f"{pdf_id}_ocr_{timestamp}.xlsx"
     excel_path = PROCESSED_DATA_PATH / excel_filename
     
     with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-        # Create a summary sheet
+        # Create summary sheet
         summary_data = {
             'PDF ID': [extracted_data.get('pdf_id', '')],
             'Extraction Date': [extracted_data.get('extraction_date', '')],
-            'Statements Extracted': [', '.join(extracted_data.get('metadata', {}).get('pages_processed', {}).keys())]
+            'Statements Extracted': [', '.join(extracted_data.get('statements', {}).keys())]
         }
         summary_df = pd.DataFrame(summary_data)
         summary_df.to_excel(writer, sheet_name='Summary', index=False)
         
-        # Create sheets for each Entity-Year-Statement combination
-        data_section = extracted_data.get('data', {})
+        # Create sheets for each statement and page
+        statements = extracted_data.get('statements', {})
         
-        for entity in ['Bank', 'Group']:
-            entity_data = data_section.get(entity, {})
-            
-            for year in ['Year1', 'Year2']:
-                year_data = entity_data.get(year, {})
+        for statement_type, pages_data in statements.items():
+            for page_key, page_info in pages_data.items():
+                data_dict = page_info.get('data', {})
                 
-                if not year_data:
+                if not data_dict:
                     continue
                 
-                # For each statement in this Entity-Year combination
-                for statement_type, statement_fields in year_data.items():
-                    if not statement_fields:
-                        continue
-                    
-                    # Create sheet name (max 31 chars for Excel)
-                    sheet_name = f"{entity}_{year}_{statement_type[:15]}"[:31]
-                    
-                    # Convert to DataFrame
-                    df_data = []
-                    for field_name, value in statement_fields.items():
-                        df_data.append({
-                            'Field': field_name,
-                            'Value': value
-                        })
-                    
-                    if df_data:
-                        df = pd.DataFrame(df_data)
-                        df.to_excel(writer, sheet_name=sheet_name, index=False)
-                        logger.info(f"Added sheet '{sheet_name}' with {len(df)} fields")
-        
-        # Create comprehensive view sheets - all statements for each Entity-Year
-        for entity in ['Bank', 'Group']:
-            for year in ['Year1', 'Year2']:
-                year_data = data_section.get(entity, {}).get(year, {})
+                # Convert nested dictionary to DataFrame with columns: Key, Year, Value
+                rows = []
+                for key, year_values in data_dict.items():
+                    if isinstance(year_values, dict):
+                        for year, value in year_values.items():
+                            rows.append({"Key": key, "Year": year, "Value": value})
+                    else:
+                        # Handle edge case if not nested
+                        rows.append({"Key": key, "Year": "", "Value": year_values})
                 
-                if not year_data:
-                    continue
+                df = pd.DataFrame(rows)
                 
-                # Combine all statements for this entity-year
-                combined_data = []
+                # Create sheet name
+                sheet_name = f"{statement_type}_{page_key}"[:31]
                 
-                for statement_type, fields in year_data.items():
-                    for field_name, value in fields.items():
-                        combined_data.append({
-                            'Statement': statement_type,
-                            'Field': field_name,
-                            'Value': value
-                        })
-                
-                if combined_data:
-                    sheet_name = f"{entity}_{year}_All"[:31]
-                    df = pd.DataFrame(combined_data)
-                    df.to_excel(writer, sheet_name=sheet_name, index=False)
-                    logger.info(f"Added combined sheet '{sheet_name}' with {len(df)} total fields")
+                # Write to sheet
+                df.to_excel(writer, sheet_name=sheet_name, index=False)
+                logger.info(f"Added sheet '{sheet_name}' with {len(df)} rows")
     
     logger.info(f"Saved Excel file: {excel_path}")
     
@@ -513,13 +483,15 @@ def extract_statement_images(pdf_path, pdf_id):
                 image_path = IMAGES_PATH / image_filename
                 pix.save(str(image_path))
                 
-                # Add image URL to the list
-                image_url = f"/api/images/{image_filename}"
+                # Add image URL to the list (use full URL for frontend)
+                image_url = f"http://localhost:5000/api/images/{image_filename}"
                 statement_images[frontend_key].append({
                     "url": image_url,
                     "page": page_idx + 1,
                     "filename": image_filename
                 })
+                
+                logger.info(f"  Saved image: {image_filename} for page {page_idx + 1}")
         
         doc.close()
         
@@ -589,60 +561,26 @@ def extract_statements(pdf_id):
         # Extract page images for each statement type using page locator
         statement_images, statement_pages = extract_statement_images(pdf_path, pdf_id)
         
-        # Build statements with actual page information
+        # Build statements with actual page information and images
         statements = []
         
-        statement_mapping = {
+        statement_configs = {
             'income': {
                 'type': 'income',
-                'title': 'Income Statement',
-                'data': {
-                    "Revenue": "10,500,000",
-                    "Cost of Revenue": "6,300,000",
-                    "Gross Profit": "4,200,000",
-                    "Operating Expenses": "2,100,000",
-                    "Operating Income": "2,100,000",
-                    "Interest Expense": "300,000",
-                    "Income Before Tax": "1,800,000",
-                    "Income Tax": "450,000",
-                    "Net Income": "1,350,000"
-                }
+                'title': 'Income Statement'
             },
             'balance': {
                 'type': 'balance',
-                'title': 'Balance Sheet',
-                'data': {
-                    "Current Assets": "15,000,000",
-                    "Cash and Equivalents": "5,000,000",
-                    "Accounts Receivable": "7,000,000",
-                    "Inventory": "3,000,000",
-                    "Fixed Assets": "25,000,000",
-                    "Total Assets": "40,000,000",
-                    "Current Liabilities": "8,000,000",
-                    "Long-term Debt": "12,000,000",
-                    "Total Liabilities": "20,000,000",
-                    "Shareholders Equity": "20,000,000"
-                }
+                'title': 'Balance Sheet'
             },
             'cashflow': {
                 'type': 'cashflow',
-                'title': 'Cash Flow Statement',
-                'data': {
-                    "Operating Activities": "3,500,000",
-                    "Net Income": "1,350,000",
-                    "Depreciation": "1,200,000",
-                    "Changes in Working Capital": "950,000",
-                    "Investing Activities": "-2,000,000",
-                    "Capital Expenditures": "-2,000,000",
-                    "Financing Activities": "-800,000",
-                    "Debt Repayment": "-500,000",
-                    "Dividends Paid": "-300,000",
-                    "Net Change in Cash": "700,000"
-                }
+                'title': 'Cash Flow Statement'
             }
         }
         
-        for key, config in statement_mapping.items():
+        # Build response for each statement type
+        for key, config in statement_configs.items():
             page_info = statement_pages.get(key, {})
             images = statement_images.get(key, [])
             
@@ -653,16 +591,20 @@ def extract_statements(pdf_id):
                 pages_str = "Not found"
                 confidence = 0.0
             
-            statement = {
-                "type": config['type'],
-                "data": config['data'],
-                "confidence": confidence,
-                "pages": pages_str,
-                "images": images,
-                "evidence": page_info.get('evidence', []) if page_info else []
-            }
-            
-            statements.append(statement)
+            # Only include statements that were actually found
+            if images:
+                statement = {
+                    "type": config['type'],
+                    "title": config['title'],
+                    "data": {},  # Will be populated after user selects pages
+                    "confidence": confidence,
+                    "pages": pages_str,
+                    "images": images,
+                    "evidence": page_info.get('evidence', []) if page_info else []
+                }
+                statements.append(statement)
+            else:
+                logger.warning(f"No images found for {key} statement")
         
         response = {
             "pdf": pdf_info,
@@ -782,38 +724,42 @@ def extract_data_from_pages(pdf_id):
         # Save to JSON and Excel files
         file_paths = save_extracted_data_to_files(extracted_data, pdf_id)
         
-        # Calculate total items extracted
+        # Count total items extracted
         total_items = 0
-        for entity in ['Bank', 'Group']:
-            for year in ['Year1', 'Year2']:
-                year_data = extracted_data['data'].get(entity, {}).get(year, {})
-                for statement_fields in year_data.values():
-                    total_items += len(statement_fields)
+        total_pages = 0
+        statements_count = extracted_data.get('statements', {})
+        
+        for stmt_type, pages_data in statements_count.items():
+            for page_key, page_info in pages_data.items():
+                total_pages += 1
+                data_items = page_info.get('data', [])
+                total_items += len(data_items)
         
         # Prepare response
         response = {
             "success": True,
-            "message": "Data extracted successfully using schema-based mapping",
+            "message": "Text extracted successfully using OCR",
             "pdf_id": pdf_id,
-            "statements_processed": list(extracted_data.get('metadata', {}).get('pages_processed', {}).keys()),
+            "statements_processed": list(extracted_data.get('statements', {}).keys()),
             "json_file": file_paths['json_filename'],
             "excel_file": file_paths['excel_filename'],
             "output_dir": str(PROCESSED_DATA_PATH),
-            "total_fields_extracted": total_items,
             "extraction_summary": {
-                "Bank": {
-                    "Year1": sum(len(fields) for fields in extracted_data['data']['Bank']['Year1'].values()),
-                    "Year2": sum(len(fields) for fields in extracted_data['data']['Bank']['Year2'].values())
-                },
-                "Group": {
-                    "Year1": sum(len(fields) for fields in extracted_data['data']['Group']['Year1'].values()),
-                    "Year2": sum(len(fields) for fields in extracted_data['data']['Group']['Year2'].values())
-                }
+                "total_pages": total_pages,
+                "total_items": total_items,
+                "statements": list(extracted_data.get('statements', {}).keys())
             }
         }
         
-        logger.info(f"Successfully extracted data: {response}")
+        logger.info(f"Successfully extracted: {total_pages} pages, {total_items} items")
         return jsonify(response), 200
+        
+    except Exception as e:
+        logger.error(f"Error extracting data: {str(e)}", exc_info=True)
+        return jsonify({
+            "error": str(e),
+            "success": False
+        }), 500
         
     except Exception as e:
         logger.error(f"Error extracting data: {str(e)}", exc_info=True)

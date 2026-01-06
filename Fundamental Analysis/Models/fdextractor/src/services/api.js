@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api';
+// Use environment variable or default to localhost
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -52,6 +53,19 @@ export const pdfService = {
       return response.data;
     } catch (error) {
       console.error('Error submitting statements:', error);
+      throw error;
+    }
+  },
+
+  // Extract data from selected pages
+  extractDataFromPages: async (pdfId, selectedPages) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/extract-data`, {
+        selectedPages,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error extracting data from pages:', error);
       throw error;
     }
   },

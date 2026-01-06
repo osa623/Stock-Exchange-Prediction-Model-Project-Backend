@@ -83,54 +83,19 @@ class ColumnInterpreter:
             data_sample: Optional sample data rows
         
         Returns:
-            Dict with entity_cols, year_cols mapping column indices to (entity, year)
+            Dict with 'columns' list containing ColumnInfo objects
         """
         if not table_rows or len(table_rows) < 2:
-            return {'entity_cols': {}, 'year_cols': {}}
+            return {'columns': []}
         
-        # Combine first 2-3 rows as headers (multi-line headers common)
-        header_text = []
-        for row in table_rows[:3]:
-            header_text.append([str(cell).lower() if cell else '' for cell in row])
+        # Use first few rows as headers (financial statements often have multi-line headers)
+        header_rows = table_rows[:min(3, len(table_rows))]
+        data_sample = data_sample or table_rows[3:8] if len(table_rows) > 3 else []
         
-        entity_cols = {}  # {col_idx: 'Bank' or 'Group'}
-        year_cols = {}    # {col_idx: 2023, 2024, etc}
+        # Determine number of columns
+        num_columns = max(len(row) for row in table_rows)
         
-        # Analyze each column
-        for col_idx in range(len(header_text[0])):
-            col_headers = [row[col_idx] if col_idx < len(row) else '' for row in header_text]
-            combined = ' '.join(col_headers)
-            
-            # Skip label/description columns (first column usually)
-            if col_idx == 0:
-                continue
-            
-            # Detect Bank vs Group
-            entity = None
-            if 'bank' in combined or 'company' in combined:
-                entity = 'Bank'
-            elif 'group' in combined or 'consolidated' in combined:
-                entity = 'Group'
-            
-            # Detect year
-            import re
-            years = re.findall(r'\b(20\d{2})\b', combined)
-            year = int(years[0]) if years else None
-            
-            # If we found a year but no entity, default to 'Bank' (standalone entity)
-            if year and not entity:
-                entity = 'Bank'
-            
-            if entity:
-                entity_cols[col_idx] = entity
-            if year:
-                year_cols[col_idx] = year
-        
-        return {
-            'entity_cols': entity_cols,
-            'year_cols': year_cols
-        }
-        
+        # Combine header rows for each column
         combined_headers = []
         for col_idx in range(num_columns):
             # Collect all header text for this column
@@ -158,7 +123,23 @@ class ColumnInterpreter:
         # Post-process: resolve ambiguities and assign Year1/Year2
         column_info = self._resolve_year_ordering(column_info)
         
-        return column_info
+        # Convert to list format for API response
+        columns_list = [
+            {
+                'index': info.index,
+                'column_type': info.column_type,
+                'header_text': info.header_text,
+                'confidence': info.confidence,
+                'year': info.year,
+                'entity': info.entity
+            }
+            for info in column_info.values()
+        ]
+        
+        return {
+            'columns': columns_list,
+            'column_info': column_info  # Keep original for internal use
+        }
     
     def _interpret_single_column(
         self,

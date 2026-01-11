@@ -15,19 +15,19 @@ const PDFCard = ({ pdf }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 flex flex-col h-full">
-      {/* PDF Header with gradient */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4">
-        <h3 className="font-bold text-lg text-white mb-1 truncate">{pdf.name}</h3>
+    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-200 flex flex-col h-full">
+      {/* PDF Header */}
+      <div className="bg-gray-50 border-b border-gray-200 p-5">
+        <h3 className="font-semibold text-base text-gray-900 mb-2 truncate">{pdf.name}</h3>
         <div className="flex items-center space-x-2">
-          <span className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-xs text-white">
+          <span className="bg-gray-200 px-3 py-1 rounded text-xs text-gray-700 font-medium">
             {pdf.category || 'Uncategorized'}
           </span>
         </div>
       </div>
 
       {/* PDF Information */}
-      <div className="p-4 space-y-2 flex-grow">
+      <div className="p-5 space-y-2 flex-grow">
         <div className="flex items-center text-sm">
           <span className="text-gray-500 w-20">Company:</span>
           <span className="text-gray-900 font-medium">{pdf.company || 'N/A'}</span>
@@ -48,36 +48,49 @@ const PDFCard = ({ pdf }) => {
       <div className="border-t border-gray-200"></div>
 
       {/* Action Buttons */}
-      <div className="p-4 space-y-2 bg-gray-50">
-        <p className="text-xs text-gray-600 font-medium mb-3 uppercase tracking-wide">
+      <div className="p-5 space-y-2 bg-gray-50">
+        <p className="text-xs text-gray-500 font-medium mb-3 uppercase tracking-wide">
           Select Extraction Type
         </p>
         
         {/* Button 1: Financial Statements */}
         <button
           onClick={() => handleExtraction('statements')}
-          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-between"
+          className="w-full bg-black hover:bg-gray-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
         >
-          <span>📊 Financial Statements</span>
-          <span className="text-xs bg-white/20 px-2 py-1 rounded">→</span>
+          Financial Statements
         </button>
 
         {/* Button 2: Company Details */}
         <button
           onClick={() => handleExtraction('company')}
-          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-between"
+          className="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
         >
-          <span>🏢 Company Details</span>
-          <span className="text-xs bg-white/20 px-2 py-1 rounded">→</span>
+          Company Details
         </button>
 
         {/* Button 3: Other Extraction */}
         <button
           onClick={() => handleExtraction('other')}
-          className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-between"
+          className="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
         >
-          <span>⚙️ Other Data</span>
-          <span className="text-xs bg-white/20 px-2 py-1 rounded">→</span>
+          Other Data
+        </button>
+
+        {/* Button 4: Top 20 Shareholders */}
+        <button
+          onClick={() => navigate(`/pdf/${pdf.id}/shareholders`)}
+          className="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+        >
+          Top 20 Shareholders
+        </button>
+
+        {/* Button 5: Investor Relations */}
+        <button
+          onClick={() => navigate(`/pdf/${pdf.id}/investor-relations`)}
+          className="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+        >
+          Investor Relations
         </button>
       </div>
     </div>

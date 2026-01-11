@@ -164,6 +164,92 @@ class TOCDetector:
         
         return results
     
+    def get_investor_relations_page_from_toc(self, pdf) -> List[Dict]:
+        """
+        Find pages where INVESTOR RELATIONS appears as main title.
+        Skip TOC - only scan page content directly.
+        
+        Returns:
+            [{'page_num': 45, 'confidence': 0.98, 'evidence': '...', 'source': 'content_scan'}]
+        """
+        # Directly scan all pages for "INVESTOR RELATIONS" as main title
+        results = self._scan_for_investor_relations_pages(pdf)
+        return results
+    
+    def _scan_for_investor_relations_pages(self, pdf) -> List[Dict]: 
+        """
+        Find INVESTOR RELATIONS section, then find all shareholder-related pages.
+        Returns all pages with shareholder headings like Top 20/Twenty Major Shareholders.
+        """
+        results = []
+        investor_relations_page = None
+        
+        # Step 1: Find INVESTOR RELATIONS main title page
+        for page_idx in range(len(pdf.pages)):
+            try:
+                text = pdf.pages[page_idx].extract_text() or ""
+                first_400_chars = text[:400].upper()
+                
+                if 'INVESTOR RELATIONS' in first_400_chars or 'INVESTOR RELATION' in first_400_chars:
+                    investor_relations_page = page_idx
+                    break
+                    
+            except:
+                continue
+        
+        if investor_relations_page is None:
+            return results  # No investor relations section found
+        
+        # Step 2: From investor relations page onwards, find ALL shareholder pages
+        # Search next 30 pages after investor relations
+        start_page = investor_relations_page
+        end_page = min(investor_relations_page + 30, len(pdf.pages))
+        
+        for page_idx in range(start_page, end_page):
+            try:
+                text = pdf.pages[page_idx].extract_text() or ""
+                text_upper = text.upper()
+                
+                # Look for shareholder headings
+                shareholder_indicators = [
+                    'TOP 20 MAJOR SHAREHOLDERS',
+                    'TOP 20 SHAREHOLDERS',
+                    'TWENTY MAJOR SHAREHOLDERS',
+                    'MAJOR SHAREHOLDERS',
+                    'TOP TWENTY SHAREHOLDERS',
+                    'TOP 20 LARGEST SHAREHOLDERS',
+                    'TWENTY LARGEST SHAREHOLDERS',
+                    'SHAREHOLDING STRUCTURE',
+                    'SHAREHOLDER COMPOSITION',
+                    'DISTRIBUTION OF SHAREHOLDING'
+                ]
+                
+                for indicator in shareholder_indicators:
+                    if indicator in text_upper:
+                        results.append({
+                            'page_num': page_idx + 1,
+                            'confidence': 0.98,
+                            'evidence': f"Found '{indicator}' in Investor Relations section",
+                            'source': 'content_scan',
+                            'type': 'shareholders_page'
+                        })
+                        break  # Only add page once even if multiple indicators match
+                
+            except:
+                continue
+        
+        # If no shareholder pages found, return the investor relations page itself
+        if not results and investor_relations_page is not None:
+            results.append({
+                'page_num': investor_relations_page + 1,
+                'confidence': 0.85,
+                'evidence': "INVESTOR RELATIONS page (specific shareholder sections not found)",
+                'source': 'content_scan',
+                'type': 'investor_relations'
+            })
+        
+        return results
+    
     def _find_actual_page(self, pdf, reported_page: int, keywords: List[str]) -> int:
         """
         Find the actual PDF page index from a reported page number.

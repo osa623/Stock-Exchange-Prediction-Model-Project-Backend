@@ -16,6 +16,10 @@ import json
 import pandas as pd
 from datetime import datetime
 import re
+from typing import Optional, Dict, List
+import pdfplumber
+from src.extractor.shareholder_extractor import ShareholderExtractor
+from src.locator.toc_detector import TOCDetector
 
 # Configure logging first
 logging.basicConfig(level=logging.INFO)
@@ -55,6 +59,10 @@ IMAGES_PATH = Path(__file__).parent / "app" / "statement_images"
 RAW_DATA_PATH.mkdir(parents=True, exist_ok=True)
 PROCESSED_DATA_PATH.mkdir(parents=True, exist_ok=True)
 IMAGES_PATH.mkdir(parents=True, exist_ok=True)
+
+# Initialize Shareholder Extractor and TOC Detector
+shareholder_extractor = ShareholderExtractor()
+toc_detector = TOCDetector()
 
 
 def extract_data_from_selected_pages(pdf_path, pdf_id, selected_pages):
@@ -767,6 +775,174 @@ def extract_data_from_pages(pdf_id):
             "error": str(e),
             "success": False
         }), 500
+
+
+# ============================================================================
+# INVESTOR RELATIONS ENDPOINTS
+# ============================================================================
+
+@app.route('/api/pdfs/<pdf_id>/investor-relations/detect', methods=['POST'])
+def detect_investor_relations(pdf_id):
+    """
+    Detect Investor Relations page from TOC.
+    """
+    try:
+        # Find PDF
+        pdfs_by_category = scan_pdfs()
+        pdf_data = None
+        for category_pdfs in pdfs_by_category.values():
+            for pdf in category_pdfs:
+                if pdf['id'] == pdf_id:
+                    pdf_data = pdf
+                    break
+            if pdf_data:
+                break
+        
+        if not pdf_data:
+            return jsonify({'error': 'PDF not found'}), 404
+        
+        pdf_path = pdf_data['path']
+        logger.info(f"Detecting investor relations for PDF: {pdf_path}")
+        
+        # Detect investor relations pages
+        with pdfplumber.open(pdf_path) as pdf:
+            logger.info(f"PDF has {len(pdf.pages)} pages")
+            pages = toc_detector.get_investor_relations_page_from_toc(pdf)
+            logger.info(f"Detected pages: {pages}")
+        
+        if not pages:
+            logger.warning(f"No investor relations pages detected for {pdf_id}")
+        
+        response_data = {
+            'pdf_id': pdf_id,
+            'pdf_name': pdf_data['name'],
+            'pages': pages,
+            'page_count': len(pages) if pages else 0,
+            'method': 'toc_detection',
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        logger.info(f"Returning response: {response_data}")
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logger.error(f"Investor relations detection error: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/pdfs/<pdf_id>/investor-relations/images', methods=['POST'])
+def get_investor_relations_images(pdf_id):
+    """
+    Get full page images from all detected shareholder pages.
+    """
+    try:
+        data = request.get_json() or {}
+        pages = data.get('pages')  # Array of page numbers
+        
+        if not pages:
+            return jsonify({'error': 'pages array required'}), 400
+        
+        # Find PDF
+        pdfs_by_category = scan_pdfs()
+        pdf_data = None
+        for category_pdfs in pdfs_by_category.values():
+            for pdf in category_pdfs:
+                if pdf['id'] == pdf_id:
+                    pdf_data = pdf
+                    break
+            if pdf_data:
+                break
+        
+        if not pdf_data:
+            return jsonify({'error': 'PDF not found'}), 404
+        
+        pdf_path = pdf_data['path']
+        
+        # Extract full page image for each detected page
+        all_images = []
+        for page_num in pages:
+            logger.info(f"Extracting full page image from page {page_num}")
+            page_images = shareholder_extractor.extract_page_images(pdf_path, page_num)
+            all_images.extend(page_images)
+        
+        response_data = {
+            'pdf_id': pdf_id,
+            'pages': pages,
+            'images': all_images,
+            'image_count': len(all_images),
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logger.error(f"Image extraction error: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/pdfs/<pdf_id>/investor-relations/extract', methods=['POST'])
+def extract_investor_relations_table(pdf_id):
+    """
+    Extract investor relations information from selected image using OCR.
+    """
+    try:
+        data = request.get_json() or {}
+        page_num = data.get('page_num')
+        bbox = data.get('bbox')
+        
+        if page_num is None:
+            return jsonify({'error': 'page_num required'}), 400
+        
+        # Find PDF
+        pdfs_by_category = scan_pdfs()
+        pdf_data = None
+        for category_pdfs in pdfs_by_category.values():
+            for pdf in category_pdfs:
+                if pdf['id'] == pdf_id:
+                    pdf_data = pdf
+                    break
+            if pdf_data:
+                break
+        
+        if not pdf_data:
+            return jsonify({'error': 'PDF not found'}), 404
+        
+        pdf_path = pdf_data['path']
+        
+        # Extract table data
+        logger.info(f"Extracting investor relations data from page {page_num}")
+        extracted_data = shareholder_extractor.extract_table_from_page(
+            pdf_path, 
+            page_num, 
+            bbox=bbox
+        )
+        
+        # Save to JSON
+        output_dir = PROCESSED_DATA_PATH.parent / 'investor_relations'
+        output_dir.mkdir(exist_ok=True)
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_file = output_dir / f"{pdf_id}_investor_relations_{timestamp}.json"
+        
+        with open(output_file, 'w') as f:
+            json.dump(extracted_data, f, indent=2)
+        
+        logger.info(f"Saved investor relations data to {output_file}")
+        
+        response_data = {
+            'pdf_id': pdf_id,
+            'page_num': page_num,
+            'data': extracted_data,
+            'saved_to': str(output_file),
+            'success': True,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logger.error(f"Extraction error: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':

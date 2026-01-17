@@ -149,8 +149,30 @@ class ShareholderExtractor:
         try:
             logger.info(f"Extracting table from page {page_num} using OCR")
             
+            # Try to extract with pdfplumber first (better for structured tables)
+            df = self._extract_with_pdfplumber(pdf_path, page_num, bbox)
+            
+            if df is not None and not df.empty:
+                logger.info(f"Successfully extracted table with pdfplumber")
+                structured_data = self._parse_table_to_year_format(df)
+                
+                if structured_data:
+                    return {
+                        'success': True,
+                        'attribute_count': len(structured_data),
+                        'data': structured_data,
+                        'page_num': page_num,
+                        'raw_table': {
+                            'method': 'pdfplumber',
+                            'rows': len(df)
+                        }
+                    }
+            
+            # Fallback to OCR if pdfplumber fails or returns no data
+            logger.info("Falling back to OCR extraction")
+            
             # Extract the page as image and run OCR
-            ocr_text = self._extract_with_ocr(pdf_path, page_num)
+            ocr_text = self._extract_with_ocr(pdf_path, page_num, bbox)
             
             if not ocr_text or len(ocr_text.strip()) == 0:
                 return {
@@ -182,7 +204,7 @@ class ShareholderExtractor:
                 'data': {}
             }
     
-    def _extract_with_ocr(self, pdf_path: str, page_num: int) -> str:
+    def _extract_with_ocr(self, pdf_path: str, page_num: int, bbox: Optional[List] = None) -> str:
         """
         Extract text from page using Tesseract OCR.
         
@@ -205,7 +227,15 @@ class ShareholderExtractor:
             page = doc[page_idx]
             
             # Render page at high resolution for better OCR
-            pix = page.get_pixmap(matrix=fitz.Matrix(3, 3))  # 3x zoom
+            matrix = fitz.Matrix(3, 3)  # 3x zoom
+            
+            if bbox:
+                # Use bbox if provided [x0, y0, x1, y1]
+                clip = fitz.Rect(bbox[0], bbox[1], bbox[2], bbox[3])
+                pix = page.get_pixmap(matrix=matrix, clip=clip)
+            else:
+                pix = page.get_pixmap(matrix=matrix)
+                
             img_data = pix.tobytes("png")
             
             # Convert to PIL Image
@@ -252,8 +282,29 @@ class ShareholderExtractor:
                     break
             
             if year_line_idx == -1 or not years:
-                logger.warning("Could not find year header in OCR text")
-                return result
+                logger.warning("Could not find year header in OCR text. Scanning for best header candidate.")
+                
+                # Scan first 10 lines for a line with multiple text parts
+                best_header_idx = -1
+                max_cols = 0
+                
+                for idx in range(min(10, len(lines))):
+                    line = lines[idx].strip()
+                    parts = re.split(r'\s{2,}|\t|\|', line)
+                    parts = [p.strip() for p in parts if p.strip()]
+                    
+                    # Heuristic: headers usually have > 1 columns and are text
+                    if len(parts) > 1 and not all(p.replace('.', '').isdigit() for p in parts):
+                        if len(parts) > max_cols:
+                            max_cols = len(parts)
+                            best_header_idx = idx
+                
+                if best_header_idx != -1:
+                    year_line_idx = best_header_idx
+                    logger.info(f"Found generic header at line {year_line_idx}: {lines[year_line_idx]}")
+                elif len(lines) > 0:
+                    year_line_idx = 0
+                    logger.warning("No good header found, defaulting to first line")
             
             # Process lines after year header
             for line_idx in range(year_line_idx + 1, len(lines)):
@@ -285,7 +336,38 @@ class ShareholderExtractor:
                         # Clean value
                         value = value.replace(',', '').strip()
                         if value and value != '-' and value != '':
+                            value = value.replace(',', '').strip()
+                        if value and value != '-' and value != '':
                             year_values[year] = parts[value_idx]  # Keep original format
+                
+                # If no years found, try to use headers as keys (if header row detected without years)
+                if not years and year_line_idx >= 0:
+                    # Get headers from the header line
+                    header_line = lines[year_line_idx].strip()
+                    headers = re.split(r'\s{2,}|\t|\|', header_line)
+                    headers = [h.strip() for h in headers if h.strip()]
+                    
+                    # Skip first header if it matches attribute column
+                    start_idx = 1 if len(headers) > 1 else 0
+                    
+                    for i in range(start_idx, len(headers)):
+                        header_name = headers[i]
+                        value_idx = i + 1 if start_idx == 1 else i
+                        
+                        if value_idx < len(parts):
+                            value = parts[value_idx].strip()
+                            value = value.replace(',', '').strip()
+                        if value and value != '-' and value != '':
+                            year_values[header_name] = value
+                    
+                    # If we have more parts than headers, add them as generic columns
+                    if len(parts) > len(headers) + (1 if start_idx == 0 else 0):
+                        extra_start = len(headers) + (0 if start_idx == 0 else 1)
+                        for i in range(extra_start, len(parts)):
+                            col_name = f"Column_{i+1}"
+                            value = parts[i].strip()
+                            if value:
+                                year_values[col_name] = value
                 
                 if year_values:
                     result[attribute_name] = year_values
@@ -312,8 +394,28 @@ class ShareholderExtractor:
                 
                 page = pdf.pages[page_num - 1]  # Convert to 0-indexed
                 
+                # Apply cropping if bbox provided
+                if bbox:
+                    # pdfplumber expects [x0, top, x1, bottom]
+                    # fitz/bbox usually [x0, y0, x1, y1] where y is from top
+                    crop_box = (bbox[0], bbox[1], bbox[2], bbox[3])
+                    try:
+                        page = page.within_bbox(crop_box)
+                    except Exception as e:
+                        logger.warning(f"Could not crop page with bbox {bbox}: {e}")
+                
                 # Extract tables from the page
                 tables = page.extract_tables()
+                
+                # If default extraction fails, try text-based extraction (good for borderless tables)
+                if not tables:
+                    logger.info("Default pdfplumber extraction failed, trying text-based strategy")
+                    settings = {
+                        "vertical_strategy": "text", 
+                        "horizontal_strategy": "text",
+                        "intersection_x_tolerance": 15
+                    }
+                    tables = page.extract_tables(table_settings=settings)
                 
                 if not tables or len(tables) == 0:
                     logger.warning("No tables found with pdfplumber")

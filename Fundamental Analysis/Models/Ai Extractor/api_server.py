@@ -20,6 +20,7 @@ from typing import Optional, Dict, List
 import pdfplumber
 from src.extractor.shareholder_extractor import ShareholderExtractor
 from src.locator.toc_detector import TOCDetector
+from src.extractor.table_parser import TableParser
 
 # Configure logging first
 logging.basicConfig(level=logging.INFO)
@@ -63,6 +64,7 @@ IMAGES_PATH.mkdir(parents=True, exist_ok=True)
 # Initialize Shareholder Extractor and TOC Detector
 shareholder_extractor = ShareholderExtractor()
 toc_detector = TOCDetector()
+table_parser = TableParser()
 
 
 def extract_data_from_selected_pages(pdf_path, pdf_id, selected_pages):
@@ -109,6 +111,7 @@ def extract_data_from_selected_pages(pdf_path, pdf_id, selected_pages):
             
             # Initialize statement data
             extracted_data['statements'][statement_type] = {}
+            current_schema = None  # Reset schema for new statement type
             
             # Process each page
             for page_num in pages:
@@ -162,103 +165,15 @@ def extract_data_from_selected_pages(pdf_path, pdf_id, selected_pages):
                     except Exception as e:
                         logger.error(f"  OCR failed: {str(e)}")
                 
-                # Parse lines into key-value pairs with year-based structure
-                parsed_data = {}
+                # Parse lines using TableParser
+                # Pass current_schema to maintain consistency across pages of the same statement
+                parsed_data, schema = table_parser.parse_lines(extracted_lines, schema=current_schema)
                 
-                # Try to detect the year from the document
-                current_year = None
-                for line in extracted_lines[:20]:  # Check first 20 lines for year
-                    year_match = re.search(r'(20\d{2})', line)
-                    if year_match:
-                        current_year = int(year_match.group(1))
-                        break
-                
-                # Default to current year if not found
-                if not current_year:
-                    current_year = datetime.now().year
-                
-                previous_year = current_year - 1
-                logger.info(f"  Detected years: {current_year}, {previous_year}")
-                
-                # Helper function to check if a line is likely a numeric value
-                def is_numeric_value(text):
-                    # Remove common separators and check if it's a number
-                    cleaned = text.replace(',', '').replace('(', '').replace(')', '').replace('-', '').replace('.', '').strip()
-                    return cleaned.isdigit() or (cleaned and all(c.isdigit() or c in '.,()-' for c in text))
-                
-                i = 0
-                while i < len(extracted_lines):
-                    line = extracted_lines[i].strip()
-                    
-                    # Skip very short lines
-                    if len(line) < 3:
-                        i += 1
-                        continue
-                    
-                    # Skip standalone page numbers
-                    if re.match(r'^\d+$', line) and len(line) < 4:
-                        i += 1
-                        continue
-                    
-                    # Check if line has multiple whitespace-separated parts (data on same line)
-                    parts = re.split(r'\s{2,}|\t+', line)
-                    
-                    if len(parts) >= 2 and is_numeric_value(parts[1]):
-                        # Data is on the same line: "Label    Value1    Value2"
-                        key = parts[0].strip()
-                        parsed_data[key] = {
-                            str(current_year): parts[1].strip()
-                        }
-                        
-                        # Store additional values if present (previous year)
-                        if len(parts) > 2 and is_numeric_value(parts[2]):
-                            parsed_data[key][str(previous_year)] = parts[2].strip()
-                        
-                        i += 1
-                        
-                    elif not is_numeric_value(line) and i + 1 < len(extracted_lines):
-                        # Current line is a label, look ahead for values
-                        key = line
-                        
-                        # Look at next lines to find numeric values
-                        j = i + 1
-                        values_found = []
-                        
-                        # Skip note numbers (single or double digit numbers)
-                        while j < len(extracted_lines):
-                            next_line = extracted_lines[j].strip()
-                            
-                            # Skip note numbers (typically 1-2 digits)
-                            if re.match(r'^\d{1,2}$', next_line):
-                                j += 1
-                                continue
-                            
-                            # If it's a numeric value, collect it
-                            if is_numeric_value(next_line) and len(next_line) > 2:
-                                values_found.append(next_line)
-                                j += 1
-                                # Collect up to 2 values (current year, previous year)
-                                if len(values_found) >= 2:
-                                    break
-                            else:
-                                # Not a numeric value, stop looking
-                                break
-                        
-                        # Store the key-value pair with year structure
-                        if values_found:
-                            parsed_data[key] = {
-                                str(current_year): values_found[0]
-                            }
-                            # Store second value if present (usually previous year)
-                            if len(values_found) > 1:
-                                parsed_data[key][str(previous_year)] = values_found[1]
-                        else:
-                            # No values found, store empty
-                            parsed_data[key] = {}
-                        
-                        i = j
-                    else:
-                        i += 1
+                # Update schema if we found one (and didn't have one, or improved it?)
+                # Usually we trust the first schema we find in the statement.
+                if schema and not current_schema:
+                    current_schema = schema
+                    logger.info(f"  Locked schema for {statement_type}: {[c.name for c in schema]}")
                 
                 logger.info(f"  Extracted {len(parsed_data)} data items from page {page_num}")
                 

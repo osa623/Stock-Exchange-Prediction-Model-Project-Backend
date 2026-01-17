@@ -198,22 +198,48 @@ def extract_data_from_selected_pages(pdf_path, pdf_id, selected_pages):
     return extracted_data
 
 
-def save_extracted_data_to_files(extracted_data, pdf_id):
+def save_extracted_data_to_files(extracted_data, pdf_id, original_filename=None):
     """
     Save extracted data to both JSON and Excel files.
+    Follows structure: [Sector]/[Company]/[Year]/[Filename].json
     
     Args:
         extracted_data: Dictionary containing extracted text data
         pdf_id: Unique identifier for the PDF
+        original_filename: Original PDF filename for parsing hierarchy
     
     Returns:
         Dictionary with file paths
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
+    # Determine Output Directory
+    output_dir = PROCESSED_DATA_PATH
+    
+    if original_filename:
+        try:
+            # Expected format: Sector_Company_Year.pdf
+            stem = Path(original_filename).stem
+            parts = stem.split('_')
+            
+            if len(parts) >= 3:
+                sector = parts[0]
+                year = parts[-1]
+                # Join middle parts as company name (in case company has underscores, though convention says CamelCase)
+                company = "_".join(parts[1:-1])
+                
+                # Create hierarchy: Sector/Company/Year
+                output_dir = PROCESSED_DATA_PATH / sector / company / year
+                output_dir.mkdir(parents=True, exist_ok=True)
+                logger.info(f"Using structured output directory: {output_dir}")
+            else:
+                logger.warning(f"Filename '{original_filename}' does not match Sector_Company_Year format. Using default.")
+        except Exception as e:
+            logger.warning(f"Error parsing filename structure: {e}. Using default.")
+            
     # JSON file
     json_filename = f"{pdf_id}_ocr_{timestamp}.json"
-    json_path = PROCESSED_DATA_PATH / json_filename
+    json_path = output_dir / json_filename
     
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(extracted_data, f, indent=2, ensure_ascii=False)
@@ -222,7 +248,7 @@ def save_extracted_data_to_files(extracted_data, pdf_id):
     
     # Excel file
     excel_filename = f"{pdf_id}_ocr_{timestamp}.xlsx"
-    excel_path = PROCESSED_DATA_PATH / excel_filename
+    excel_path = output_dir / excel_filename
     
     with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
         # Create summary sheet
@@ -645,7 +671,12 @@ def extract_data_from_pages(pdf_id):
         extracted_data = extract_data_from_selected_pages(pdf_path, pdf_id, selected_pages)
         
         # Save to JSON and Excel files
-        file_paths = save_extracted_data_to_files(extracted_data, pdf_id)
+        # Pass the original filename for structured organization
+        file_paths = save_extracted_data_to_files(
+            extracted_data, 
+            pdf_id, 
+            original_filename=pdf_info["name"] if pdf_info else None
+        )
         
         # Count total items extracted
         total_items = 0
@@ -666,7 +697,8 @@ def extract_data_from_pages(pdf_id):
             "statements_processed": list(extracted_data.get('statements', {}).keys()),
             "json_file": file_paths['json_filename'],
             "excel_file": file_paths['excel_filename'],
-            "output_dir": str(PROCESSED_DATA_PATH),
+            "output_dir": str(PROCESSED_DATA_PATH), # Technically this might be deep nested now
+            "full_output_path": str(Path(file_paths['json_file']).parent),
             "extraction_summary": {
                 "total_pages": total_pages,
                 "total_items": total_items,

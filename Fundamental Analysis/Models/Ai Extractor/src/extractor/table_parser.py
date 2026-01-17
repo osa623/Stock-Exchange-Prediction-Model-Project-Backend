@@ -1,6 +1,7 @@
 """
 Table Parser
 Parses text lines into structured data using ColumnInterpreter and Stream Extraction Strategy.
+Refactored to handle both vertical (multiline) and horizontal (inline) layouts by tokenizing first.
 """
 
 import re
@@ -40,7 +41,7 @@ class TableParser:
         # Filter empty lines
         clean_lines = [line.strip() for line in lines if line.strip()]
         if not clean_lines:
-            return {}
+            return {}, None
 
         # 1. Detect Schema from Header if not provided
         if not schema:
@@ -48,13 +49,25 @@ class TableParser:
             
         if not schema:
             logger.warning("Could not detect schema from headers and none provided.")
-            # Fallback? return empty for now
-            return {}
+            return {}, None
 
         logger.info(f"Using schema: {[c.name for c in schema]}")
 
-        # 2. Extract Data
-        data = self._extract_data_stream(clean_lines, schema)
+        # 2. Tokenize Content
+        # We split every line by 2+ spaces to handle horizontal layouts
+        # e.g. "Gross Income    100    200" -> ["Gross Income", "100", "200"]
+        # And we flatten this into a single stream of tokens.
+        tokens = []
+        for line in clean_lines:
+            # Split by 2+ spaces or tabs
+            parts = re.split(r'\s{2,}|\t+', line)
+            for part in parts:
+                p = part.strip()
+                if p:
+                    tokens.append(p)
+
+        # 3. Extract Data from Token Stream
+        data = self._extract_data_from_tokens(tokens, schema)
         
         return data, schema
 
@@ -65,14 +78,8 @@ class TableParser:
         has_page = False
         entities = []
 
-        # Keywords
         for line in lines:
             text = line.lower()
-            
-            # Stop if we hit what looks like a data row (e.g. "Gross income")
-            # Heuristic: simple text line, no numbers, not a header keyword
-            # But "Gross income" might be confused with header. 
-            # Let's just scan all header tokens.
             
             # Skip Title lines/Report meta-data to avoid grabbing years from "Annual Report 2024"
             if "report" in text or "dated" in text:
@@ -84,17 +91,11 @@ class TableParser:
                 if len(years) < 4: # Limit to expected max 4 years usually
                     years.append(int(y))
             
-            # Detect Note/Page
-            if re.search(r'\bnote\b', text):
-                has_note = True
-            if re.search(r'\bpage\b', text) or re.search(r'\bno\.\b', text): # 'no.' often accompanies Page
-                has_page = True
-                
-            # Detect Entities
-            if "bank" in text:
-                entities.append("Bank")
-            if "group" in text:
-                entities.append("Group")
+            if re.search(r'\bnote\b', text): has_note = True
+            if re.search(r'\bpage\b', text) or re.search(r'\bno\.\b', text): has_page = True
+            
+            if "bank" in text: entities.append("Bank")
+            if "group" in text: entities.append("Group")
 
         # Deduplicate Entities (preserve order)
         seen = set()
@@ -108,92 +109,100 @@ class TableParser:
         if has_page:
             schema.append(ColumnDef(ColumnType.PAGE, "Page"))
             
-        # Map Years to Entities
-        # Case 1: 4 years, 2 entities (Bank, Group)
-        # Expected: Bank Y1, Bank Y2, Group Y1, Group Y2 (or similar)
-        # We need to map the ORDER of values to the columns.
-        # From the example: Bank ... Group ... 2024 ... 2023 ... 2024 ... 2023
-        # This implies: Column 1 = Bank 2024, Col 2 = Bank 2023, Col 3 = Group 2024, Col 4 = Group 2023.
-        
-        # If we found 4 years:
         if len(years) >= 4:
-            # Assume 2 entities with 2 years each
-            # Default entities if not found
             if len(unique_entities) < 2:
                 unique_entities = ["Entity1", "Entity2"]
             
-            # Sort years descending (recent first) usually
-            # But the order in `years` list reflects extraction order.
-            # In the example: 2024, 2023, 2024, 2023.
+            # Map based on standard layout (Entity1 Y1, Entity1 Y2, Entity2 Y1, Entity2 Y2)
+            # OR (Entity1, Entity2, Y1, Y2...)
+            # We assume order detected in years list matches column order.
             
-            # Assign
             schema.append(ColumnDef(ColumnType.VALUE, f"{years[0]} ({unique_entities[0]})", years[0], unique_entities[0]))
             schema.append(ColumnDef(ColumnType.VALUE, f"{years[1]} ({unique_entities[0]})", years[1], unique_entities[0]))
             schema.append(ColumnDef(ColumnType.VALUE, f"{years[2]} ({unique_entities[1]})", years[2], unique_entities[1]))
             schema.append(ColumnDef(ColumnType.VALUE, f"{years[3]} ({unique_entities[1]})", years[3], unique_entities[1]))
             
         elif len(years) >= 2:
-            # Assume 1 entity or merged
             schema.append(ColumnDef(ColumnType.VALUE, str(years[0]), years[0], "Bank"))
             schema.append(ColumnDef(ColumnType.VALUE, str(years[1]), years[1], "Bank"))
         else:
-            # Minimal fallback
+            # Only used if barely anything found
             schema.append(ColumnDef(ColumnType.VALUE, "Current Year"))
             schema.append(ColumnDef(ColumnType.VALUE, "Previous Year"))
             
         return schema
 
-    def _extract_data_stream(self, lines: List[str], schema: List[ColumnDef]) -> Dict[str, Any]:
+    def _extract_data_from_tokens(self, tokens: List[str], schema: List[ColumnDef]) -> Dict[str, Any]:
         """Extract data by matching stream of tokens to schema."""
         data = {}
         
         i = 0
-        while i < len(lines):
-            line = lines[i]
+        while i < len(tokens):
+            token = tokens[i]
             
             # Identify Key
-            # Must be text, longer than 3 chars, not a number, not a reserved keyword
-            if self._is_valid_key(line):
-                key = line
-                row_data = {}
+            # Must be text, longer than 3 chars
+            if self._is_valid_key(token):
+                key = token
+                # Check if next token is ALSO a key part? (e.g. "Gross", "Income")
+                # Heuristic: if next token is NOT valid key (is number/short) -> current key is complete.
+                # If next token IS valid key -> join them?
+                # Actually, PyMuPDF line splitting might verify this.
+                # But we split by \s{2,}. So "Gross Income" (1 space) stays as one token.
+                # "Gross Income" (2 spaces) becomes two tokens.
+                # We should try to join adjacent text tokens into the Key.
                 
-                # Look ahead for values
                 j = i + 1
+                while j < len(tokens):
+                    next_tok = tokens[j]
+                    if self._is_valid_key(next_tok):
+                        # Join with space
+                        key += " " + next_tok
+                        j += 1
+                    else:
+                        break
+                
+                # Now collect values
+                row_data = {}
                 collected_values = []
                 
-                # Greedily finding numeric tokens
-                # We stop if we hit something that looks like a Key (text)
-                # OR if we found enough values for all value columns
-                
+                # Look ahead for values starting from j
                 max_values_needed = len([c for c in schema if c.col_type == ColumnType.VALUE])
                 max_notes_needed = len([c for c in schema if c.col_type in [ColumnType.NOTE, ColumnType.PAGE]])
                 
-                while j < len(lines):
-                    token = lines[j]
-                    if self._is_valid_key(token):
-                        # Next key found, stop collecting
-                        break
+                k = j
+                while k < len(tokens):
+                    val_tok = tokens[k]
                     
-                    if self._is_numeric(token):
-                        collected_values.append(token)
+                    # Stop if we hit a new Key (that isn't a value)
+                    if self._is_valid_key(val_tok):
+                         break
                     
-                    j += 1
+                    if self._is_numeric(val_tok):
+                        # Filter small integers (likely percentages or noise)
+                        # User Rule: "Actually evertime these values equals 4 or more than 4 digits"
+                        # We allow dashes, floats (dots), and long integers (>= 4 digits)
+                        if self._is_valid_financial_value(val_tok):
+                            collected_values.append(val_tok)
+                        else:
+                           # Skip "small" numbers like 34, 205, (25)
+                           pass
                     
-                    # Safety break
+                    k += 1
+                    
                     if len(collected_values) >= max_values_needed + max_notes_needed:
                         break
                 
-                # Map collected values to schema
+                # Map collected values
                 if collected_values:
                     self._map_values_to_schema(row_data, schema, collected_values)
-                    
                     if row_data:
                         data[key] = row_data
                 
-                # Advance main loop
-                i = j
+                # Advance main loop to k
+                i = k
             else:
-                # noise or header, skip
+                # Noise or header token
                 i += 1
                 
         return data
@@ -201,81 +210,63 @@ class TableParser:
     def _map_values_to_schema(self, row_data: Dict, schema: List[ColumnDef], values: List[str]):
         """
         Smart mapping of values to schema.
-        Distinguish Note/Page (small ints) from Money (large numbers, commas).
+        Since we pre-filtered small integers (Notes/Pages), we assume 'values' contains only financial data.
+        So we skip NOTE/PAGE columns in the schema and fill the VALUE columns.
         """
-        # Value columns (money)
-        val_schema = [c for c in schema if c.col_type == ColumnType.VALUE]
-        note_schema = [c for c in schema if c.col_type in [ColumnType.NOTE, ColumnType.PAGE]]
-        
-        # Heuristic: Large numbers (>1000 or contains comma) are definitely Values.
-        # Small numbers (<1000, no comma) could be Note, Page, OR Value (if value is small).
-        # But in financial statements, Values usually aligned.
-        
-        money_values = []
-        other_values = []
-        
-        for v in values:
-            if self._is_money_value(v):
-                money_values.append(v)
-            else:
-                other_values.append(v)
-        
-        # If we have enough money values to fill the value slots, assign them left-to-right to the VALUE columns
-        # Note/Page get whatever is left (if any), or skipped
-        
-        # Strict mapping:
-        # If we have 4 value columns and 4 money_values, perfect match.
-        # What if we have 5 values (1 note, 4 money)?
-        # The list `values` preserves order.
-        
-        # Try to map sequentially but skip Note/Page if value looks like money
-        val_idx = 0
         schema_idx = 0
         
         for val in values:
+            # Skip NOTE/PAGE columns until we find a VALUE column
+            while schema_idx < len(schema) and schema[schema_idx].col_type in [ColumnType.NOTE, ColumnType.PAGE]:
+                schema_idx += 1
+            
             if schema_idx >= len(schema):
                 break
                 
             col_def = schema[schema_idx]
             
-            # If column is Note/Page
-            if col_def.col_type in [ColumnType.NOTE, ColumnType.PAGE]:
-                if not self._is_money_value(val):
-                    # Looks like a note/page, assign it
-                    # (We ignore note/page in output as per user request, or store it?)
-                    # User said: "statement1 : { year1: value ... }"
-                    # Implies we don't need Note/Page in output.
-                    schema_idx += 1
-                else:
-                    # We expected Note/Page but got Money.
-                    # Assume Note/Page was empty/missing. 
-                    # Skip this column and try to match Money to next VALUE column.
-                    schema_idx += 1
-                    # Re-eval this value against next column
-                    # But we need to stay on this value? 
-                    # No, let's just retry logic.
-                    # Actually, if we skip, we should check if *this* value matches *next* column.
-                    if schema_idx < len(schema) and schema[schema_idx].col_type == ColumnType.VALUE:
-                         row_data[schema[schema_idx].name] = val
-                         schema_idx += 1
-            
-            # If column is Value
-            elif col_def.col_type == ColumnType.VALUE:
-                # Assign key
+            if col_def.col_type == ColumnType.VALUE:
                 row_data[col_def.name] = val
                 schema_idx += 1
-                
-        # If we missed some value columns due to strict mapping, that's life.
-        # This logic is decent.
 
-    def _is_valid_key(self, line: str) -> bool:
-        """Check if line is a valid Row Key (Description)."""
-        if self._is_numeric(line): return False
-        if len(line) < 3: return False
-        # Avoid headers
-        lower = line.lower()
-        if "bank" in lower or "group" in lower or "note" in lower or "page" in lower or "lkr" in lower:
+    def _is_valid_financial_value(self, text: str) -> bool:
+        """
+        True if text looks like a valid financial value (>= 4 digits, or float, or dash).
+        Rejects small integers (noise, percentages, note numbers).
+        """
+        # Allow dash
+        clean = text.replace('–', '-').strip()
+        if clean == '-' or clean == '—': return True
+        
+        # Allow floats (must contain dot)
+        if '.' in text: return True
+        
+        # Allow commas (implies > 999 usually)
+        if ',' in text: return True
+        
+        # Check digit count
+        digits = re.sub(r'\D', '', text)
+        if len(digits) >= 4: return True
+        
+        return False
+
+    def _is_valid_key(self, token: str) -> bool:
+        """Check if token is a valid Row Key (Description)."""
+        if self._is_numeric(token): return False
+        if len(token) < 2: return False # Allow 2 chars? "Re"
+        
+        # Avoid headers (Use strict checks)
+        lower = token.lower()
+        # Headers usually are standalone "Bank" or "Group" or "Note"
+        if lower in ["bank", "group", "note", "page", "lkr", "no."]:
             return False
+            
+        # Also check for regex if punctuation is attached like "Note." or "(Bank)"
+        if re.match(r'^\(?(bank|group|note|page|lkr|no\.?)\)?$', lower):
+            return False
+            
+        # Avoid "2024"
+        if re.match(r'20\d{2}', token): return False
         return True
 
     def _is_numeric(self, text: str) -> bool:
@@ -290,4 +281,3 @@ class TableParser:
         cleaned = text.replace(',', '').replace('(', '').replace(')', '').replace('-', '').replace('.', '').strip()
         if cleaned.isdigit() and len(cleaned) > 3: return True # > 999
         return False
-

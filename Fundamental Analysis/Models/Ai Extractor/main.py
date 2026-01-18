@@ -82,7 +82,7 @@ def main():
         canonical_output = result.get('canonical_output', {})
         
         # Save user-friendly output
-        output_dir = Path(__file__).parent / "data" / "processed" / "extracted_json"
+        output_dir = Path(__file__).parent / "data" / "processed" / "statement_jsons"
         output_dir.mkdir(parents=True, exist_ok=True)
         output_file = output_dir / f"{pdf_path.stem}_extracted.json"
         

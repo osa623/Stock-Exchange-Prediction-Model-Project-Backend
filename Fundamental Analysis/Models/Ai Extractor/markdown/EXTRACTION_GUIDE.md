@@ -171,7 +171,7 @@ Automatically detects column types:
 ## File Location
 Both JSON and Excel files are saved to:
 ```
-Fundamental Analysis/Models/Ai Extractor/data/processed/extracted_json/
+Fundamental Analysis/Models/Ai Extractor/data/processed/statement_jsons/
 ```
 
 File naming convention:
@@ -223,7 +223,7 @@ Including: Operating activities, Investing activities, Financing activities, and
   "statements_processed": ["Income_Statement", "Financial Position Statement", "Cash Flow Statement"],
   "json_file": "company_name_year_extracted_20260106_120000.json",
   "excel_file": "company_name_year_extracted_20260106_120000.xlsx",
-  "output_dir": "/path/to/processed/extracted_json",
+  "output_dir": "/path/to/processed/statement_jsons",
   "total_fields_extracted": 245,
   "extraction_summary": {
     "Bank": {
@@ -272,7 +272,7 @@ Including: Operating activities, Investing activities, Financing activities, and
   "statements_extracted": ["income", "balance", "cashflow"],
   "json_file": "company_name_year_extracted_20260106_120000.json",
   "excel_file": "company_name_year_extracted_20260106_120000.xlsx",
-  "output_dir": "/path/to/processed/extracted_json",
+  "output_dir": "/path/to/processed/statement_jsons",
   "total_items": 127
 }
 ```

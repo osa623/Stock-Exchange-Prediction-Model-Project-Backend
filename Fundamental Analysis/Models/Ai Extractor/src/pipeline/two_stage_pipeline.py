@@ -331,7 +331,7 @@ class TwoStagePipeline:
     
     def _get_output_path(self, pdf_path: Path, suffix: str) -> Path:
         """Generate output file path."""
-        output_dir = Path('data/processed/extracted_json')
+        output_dir = Path('data/processed/statement_jsons')
         output_dir.mkdir(parents=True, exist_ok=True)
         
         base_name = pdf_path.stem

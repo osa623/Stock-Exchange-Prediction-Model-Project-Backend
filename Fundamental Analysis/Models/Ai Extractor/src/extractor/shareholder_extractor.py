@@ -149,8 +149,46 @@ class ShareholderExtractor:
         try:
             logger.info(f"Extracting table from page {page_num} using OCR")
             
+            # Try to extract with pdfplumber first (better for structured tables)
+            df = self._extract_with_pdfplumber(pdf_path, page_num, bbox)
+            
+            if df is not None and not df.empty:
+                logger.info(f"Successfully extracted table with pdfplumber")
+                structured_data = self._parse_table_to_year_format(df)
+                
+                if structured_data:
+                    return {
+                        'success': True,
+                        'attribute_count': len(structured_data),
+                        'data': structured_data,
+                        'page_num': page_num,
+                        'raw_table': {
+                            'method': 'pdfplumber',
+                            'rows': len(df)
+                        }
+                    }
+                
+                # If year format parsing failed, try shareholder format parsing
+                shareholder_data = self._parse_shareholder_table(df)
+                if shareholder_data:
+                    logger.info("Successfully extracted shareholder table with pdfplumber")
+                    return {
+                        'success': True,
+                        'attribute_count': len(shareholder_data),
+                        'data': shareholder_data,
+                        'page_num': page_num,
+                        'table_type': 'shareholder_list',
+                        'raw_table': {
+                            'method': 'pdfplumber_shareholder',
+                            'rows': len(df)
+                        }
+                    }
+            
+            # Fallback to OCR if pdfplumber fails or returns no data
+            logger.info("Falling back to OCR extraction")
+            
             # Extract the page as image and run OCR
-            ocr_text = self._extract_with_ocr(pdf_path, page_num)
+            ocr_text = self._extract_with_ocr(pdf_path, page_num, bbox)
             
             if not ocr_text or len(ocr_text.strip()) == 0:
                 return {
@@ -160,18 +198,46 @@ class ShareholderExtractor:
                 }
             
             # Parse OCR text into structured table format
+            # First try year-based format (standard financial statements)
             structured_data = self._parse_ocr_text_to_year_format(ocr_text)
             
+            if structured_data:
+                return {
+                    'success': True,
+                    'attribute_count': len(structured_data),
+                    'data': structured_data,
+                    'page_num': page_num,
+                    'raw_table': {
+                        'text_length': len(ocr_text),
+                        'lines': len(ocr_text.split('\n')),
+                        'method': 'tesseract_ocr'
+                    }
+                }
+            
+            # If that fails, try shareholder text format
+            shareholder_data = self._parse_ocr_shareholder_text(ocr_text)
+            if shareholder_data:
+                return {
+                    'success': True,
+                    'attribute_count': len(shareholder_data),
+                    'data': shareholder_data,
+                    'page_num': page_num,
+                    'table_type': 'shareholder_list_ocr',
+                    'raw_table': {
+                        'text_length': len(ocr_text),
+                        'lines': len(ocr_text.split('\n')),
+                        'method': 'tesseract_ocr_shareholder'
+                    }
+                }
+            
+            # Return empty but successful if we extracted text but matched no pattern
+            # This mimics behavior of year-parser returning empty result
             return {
                 'success': True,
-                'attribute_count': len(structured_data),
-                'data': structured_data,
+                'attribute_count': 0,
+                'data': {},
                 'page_num': page_num,
-                'raw_table': {
-                    'text_length': len(ocr_text),
-                    'lines': len(ocr_text.split('\n')),
-                    'method': 'tesseract_ocr'
-                }
+                'message': 'Text extracted but no structured table found'
             }
             
         except Exception as e:
@@ -182,7 +248,7 @@ class ShareholderExtractor:
                 'data': {}
             }
     
-    def _extract_with_ocr(self, pdf_path: str, page_num: int) -> str:
+    def _extract_with_ocr(self, pdf_path: str, page_num: int, bbox: Optional[List] = None) -> str:
         """
         Extract text from page using Tesseract OCR.
         
@@ -205,7 +271,15 @@ class ShareholderExtractor:
             page = doc[page_idx]
             
             # Render page at high resolution for better OCR
-            pix = page.get_pixmap(matrix=fitz.Matrix(3, 3))  # 3x zoom
+            matrix = fitz.Matrix(3, 3)  # 3x zoom
+            
+            if bbox:
+                # Use bbox if provided [x0, y0, x1, y1]
+                clip = fitz.Rect(bbox[0], bbox[1], bbox[2], bbox[3])
+                pix = page.get_pixmap(matrix=matrix, clip=clip)
+            else:
+                pix = page.get_pixmap(matrix=matrix)
+                
             img_data = pix.tobytes("png")
             
             # Convert to PIL Image
@@ -252,8 +326,29 @@ class ShareholderExtractor:
                     break
             
             if year_line_idx == -1 or not years:
-                logger.warning("Could not find year header in OCR text")
-                return result
+                logger.warning("Could not find year header in OCR text. Scanning for best header candidate.")
+                
+                # Scan first 10 lines for a line with multiple text parts
+                best_header_idx = -1
+                max_cols = 0
+                
+                for idx in range(min(10, len(lines))):
+                    line = lines[idx].strip()
+                    parts = re.split(r'\s{2,}|\t|\|', line)
+                    parts = [p.strip() for p in parts if p.strip()]
+                    
+                    # Heuristic: headers usually have > 1 columns and are text
+                    if len(parts) > 1 and not all(p.replace('.', '').isdigit() for p in parts):
+                        if len(parts) > max_cols:
+                            max_cols = len(parts)
+                            best_header_idx = idx
+                
+                if best_header_idx != -1:
+                    year_line_idx = best_header_idx
+                    logger.info(f"Found generic header at line {year_line_idx}: {lines[year_line_idx]}")
+                elif len(lines) > 0:
+                    year_line_idx = 0
+                    logger.warning("No good header found, defaulting to first line")
             
             # Process lines after year header
             for line_idx in range(year_line_idx + 1, len(lines)):
@@ -285,7 +380,38 @@ class ShareholderExtractor:
                         # Clean value
                         value = value.replace(',', '').strip()
                         if value and value != '-' and value != '':
+                            value = value.replace(',', '').strip()
+                        if value and value != '-' and value != '':
                             year_values[year] = parts[value_idx]  # Keep original format
+                
+                # If no years found, try to use headers as keys (if header row detected without years)
+                if not years and year_line_idx >= 0:
+                    # Get headers from the header line
+                    header_line = lines[year_line_idx].strip()
+                    headers = re.split(r'\s{2,}|\t|\|', header_line)
+                    headers = [h.strip() for h in headers if h.strip()]
+                    
+                    # Skip first header if it matches attribute column
+                    start_idx = 1 if len(headers) > 1 else 0
+                    
+                    for i in range(start_idx, len(headers)):
+                        header_name = headers[i]
+                        value_idx = i + 1 if start_idx == 1 else i
+                        
+                        if value_idx < len(parts):
+                            value = parts[value_idx].strip()
+                            value = value.replace(',', '').strip()
+                        if value and value != '-' and value != '':
+                            year_values[header_name] = value
+                    
+                    # If we have more parts than headers, add them as generic columns
+                    if len(parts) > len(headers) + (1 if start_idx == 0 else 0):
+                        extra_start = len(headers) + (0 if start_idx == 0 else 1)
+                        for i in range(extra_start, len(parts)):
+                            col_name = f"Column_{i+1}"
+                            value = parts[i].strip()
+                            if value:
+                                year_values[col_name] = value
                 
                 if year_values:
                     result[attribute_name] = year_values
@@ -312,8 +438,28 @@ class ShareholderExtractor:
                 
                 page = pdf.pages[page_num - 1]  # Convert to 0-indexed
                 
+                # Apply cropping if bbox provided
+                if bbox:
+                    # pdfplumber expects [x0, top, x1, bottom]
+                    # fitz/bbox usually [x0, y0, x1, y1] where y is from top
+                    crop_box = (bbox[0], bbox[1], bbox[2], bbox[3])
+                    try:
+                        page = page.within_bbox(crop_box)
+                    except Exception as e:
+                        logger.warning(f"Could not crop page with bbox {bbox}: {e}")
+                
                 # Extract tables from the page
                 tables = page.extract_tables()
+                
+                # If default extraction fails, try text-based extraction (good for borderless tables)
+                if not tables:
+                    logger.info("Default pdfplumber extraction failed, trying text-based strategy")
+                    settings = {
+                        "vertical_strategy": "text", 
+                        "horizontal_strategy": "text",
+                        "intersection_x_tolerance": 15
+                    }
+                    tables = page.extract_tables(table_settings=settings)
                 
                 if not tables or len(tables) == 0:
                     logger.warning("No tables found with pdfplumber")
@@ -430,4 +576,182 @@ class ShareholderExtractor:
             
         except Exception as e:
             logger.error(f"Error parsing table to year format: {e}", exc_info=True)
+            return result
+
+    def _parse_shareholder_table(self, df) -> Dict[str, Dict[str, str]]:
+        """
+        Parse DataFrame into shareholder format: {Name: {Shares: X, Percentage: Y}}
+        """
+        result = {}
+        try:
+            if len(df) < 2:
+                return result
+
+            # Clean dataframe: replace None with "" and strip strings
+            df = df.applymap(lambda x: str(x).strip() if x is not None else "")
+            
+            # 1. Identify Header Row
+            header_idx = -1
+            name_col_idx = -1
+            shares_col_idx = -1
+            percent_col_idx = -1
+            
+            # keywords
+            name_keywords = ['name', 'shareholder', 'institution', 'fund']
+            shares_keywords = ['shares', 'no. of', 'holding', 'quantity', 'number']
+            percent_keywords = ['%', 'percent', 'holding %', 'stake']
+            
+            # Scan first 5 rows for headers
+            for idx in range(min(5, len(df))):
+                row_values = [str(x).lower() for x in df.iloc[idx].tolist()]
+                
+                # Check for Name column
+                for col_idx, val in enumerate(row_values):
+                    if any(k in val for k in name_keywords):
+                        name_col_idx = col_idx
+                    if any(k in val for k in shares_keywords):
+                        shares_col_idx = col_idx
+                    if any(k in val for k in percent_keywords):
+                        percent_col_idx = col_idx
+                
+                # If we found at least a name and (shares OR percent), treat as header
+                if name_col_idx != -1 and (shares_col_idx != -1 or percent_col_idx != -1):
+                    header_idx = idx
+                    break
+            
+            # If no explicit header found, but we have 3+ columns, assume logic:
+            # Col 0 = Name, Col 1 or 2 = Shares/Percent (heuristic)
+            if header_idx == -1 and len(df.columns) >= 2:
+                # Heuristic: Name is usually first text-heavy column
+                # Shares/Percent are numeric columns
+                header_idx = 0 # Assume first row might be data if no header
+                name_col_idx = 0
+                # Find likely numeric columns
+                for col_idx in range(1, len(df.columns)):
+                    # Check a few rows to see if they look numeric
+                    is_numeric = True
+                    sample_count = 0
+                    for r in range(1, min(5, len(df))):
+                        val = str(df.iloc[r, col_idx]).replace(',', '').replace('.', '').replace('%', '').strip()
+                        if val:
+                            sample_count += 1
+                            if not val.isdigit():
+                                is_numeric = False
+                                break
+                    
+                    if is_numeric and sample_count > 0:
+                        if shares_col_idx == -1:
+                            shares_col_idx = col_idx
+                        elif percent_col_idx == -1:
+                            percent_col_idx = col_idx
+            
+            if name_col_idx == -1:
+                return result # Cannot proceed without names
+                
+            # Iterate Data Rows
+            start_row = header_idx + 1 if header_idx != -1 else 0
+            
+            for i in range(start_row, len(df)):
+                row = df.iloc[i]
+                
+                # Extract Name
+                if name_col_idx < len(row):
+                    name = str(row[name_col_idx]).strip()
+                else:
+                    continue
+                    
+                # Skip numeric-only names (usually page numbers or index columns)
+                if not name or name.replace('.', '').isdigit() or len(name) < 2:
+                    continue
+                    
+                # Stop if we hit a "Total" row
+                if 'total' in name.lower():
+                    continue
+                
+                entry = {}
+                
+                # Extract Shares
+                if shares_col_idx != -1 and shares_col_idx < len(row):
+                    shares = str(row[shares_col_idx]).strip()
+                    if shares:
+                        entry['Shares'] = shares
+                        
+                # Extract Percentage
+                if percent_col_idx != -1 and percent_col_idx < len(row):
+                    percent = str(row[percent_col_idx]).strip()
+                    if percent:
+                        entry['Percentage'] = percent
+                elif shares_col_idx != -1 and shares_col_idx + 1 < len(row): 
+                     # Fallback: often percent is next to shares
+                     possible_percent = str(row[shares_col_idx+1]).strip()
+                     if '%' in possible_percent or (possible_percent.replace('.','').isdigit() and len(possible_percent) < 5):
+                         entry['Percentage'] = possible_percent
+
+                if entry:
+                    result[name] = entry
+                    
+            logger.info(f"Parsed {len(result)} shareholders from table")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error parsing shareholder table: {e}")
+            return result
+
+    def _parse_ocr_shareholder_text(self, text: str) -> Dict[str, Dict[str, str]]:
+        """
+        Parse OCR text for shareholder patterns using regex.
+        Typical line: "1. John Doe 1,000,000 10.5%"
+        """
+        result = {}
+        try:
+            lines = text.split('\n')
+            
+            # Regex to find lines ending with numbers/percentage
+            # Matches: (Name text) (Space) (Number with commas/dots) (Space) (Optional Number/Percent)
+            # Example: "Bank of Ceylon 12,400,300 12.34"
+            pattern = r'^(?P<name>.*?)\s+(?P<shares>[\d,]+)\s+(?P<percent>[\d\.]+%?)$'
+            
+            for line in lines:
+                line = line.strip()
+                if not line or len(line) < 5:
+                    continue
+                    
+                # Skip known headers
+                if any(x in line.lower() for x in ['shareholder', 'name', 'shares', 'percentage', 'holding']):
+                    continue
+                
+                match = re.search(pattern, line)
+                if match:
+                    name = match.group('name').strip()
+                    # Remove leading numbering (e.g. "1. Name")
+                    name = re.sub(r'^\d+[\.\)]\s*', '', name)
+                    
+                    if len(name) < 2 or 'total' in name.lower():
+                        continue
+                        
+                    result[name] = {
+                        'Shares': match.group('shares'),
+                        'Percentage': match.group('percent')
+                    }
+                else:
+                    # Looser pattern: Just Name and Shares
+                    # "Bank of Ceylon 12,400,300"
+                    pattern_simple = r'^(?P<name>.*?)\s+(?P<shares>[\d,]{3,})$'
+                    match_simple = re.search(pattern_simple, line)
+                    if match_simple:
+                        name = match_simple.group('name').strip()
+                        name = re.sub(r'^\d+[\.\)]\s*', '', name)
+                        
+                        shares = match_simple.group('shares')
+                        
+                        # Verify shares looks like a share count (has commas or is long)
+                        if ',' in shares or len(shares) > 4:
+                            if len(name) > 2 and 'total' not in name.lower():
+                                result[name] = {'Shares': shares}
+
+            logger.info(f"Parsed {len(result)} shareholders from OCR text")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error parsing shareholder text: {e}")
             return result

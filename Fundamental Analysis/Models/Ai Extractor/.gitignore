@@ -1,6 +1,64 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+.eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# data folder
+/data
+
+#app folder
+annual-report-backend/app/statement_images/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Data and temp
+*.sqlite3
+data/
+temp/
+
+# Test outputs
+*.coverage
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+
+# Node (frontend)
+frontend/node_modules/
+frontend/dist/
+
+# Misc
+*.bak
+*.swp
+*.swo
+
+# Ignore extracted/intermediate data
+annual-report-backend/data/processed/
+annual-report-backend/data/temp/
+annual-report-backend/data/Progerss/
+# Python
+__pycache__/
+*.py[cod]
 *$py.class
 *.so
 .Python
@@ -90,3 +148,6 @@ deprecated/
 !app/statement_images/.gitkeep
 !app/uploads/.gitkeep
 !app/results/.gitkeep
+
+# Ignore entire app folder
+app/

@@ -22,6 +22,78 @@ export const pdfService = {
     }
   },
 
+  // Shareholder detection and extraction
+  detectShareholders: async (pdfId) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/shareholders/detect`);
+      return response.data;
+    } catch (error) {
+      console.error('Error detecting shareholders:', error);
+      throw error;
+    }
+  },
+
+  getShareholderImages: async (pdfId, pageNum) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/shareholders/images`, {
+        page_num: pageNum
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting shareholder images:', error);
+      throw error;
+    }
+  },
+
+  extractShareholderTable: async (pdfId, pageNum, bbox = null) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/shareholders/extract`, {
+        page_num: pageNum,
+        bbox: bbox
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error extracting shareholder table:', error);
+      throw error;
+    }
+  },
+
+  // Investor Relations detection and extraction
+  detectInvestorRelations: async (pdfId) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/investor-relations/detect`);
+      return response.data;
+    } catch (error) {
+      console.error('Error detecting investor relations:', error);
+      throw error;
+    }
+  },
+
+  getInvestorRelationsImages: async (pdfId, pageNumbers) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/investor-relations/images`, {
+        pages: pageNumbers
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting investor relations images:', error);
+      throw error;
+    }
+  },
+
+  extractInvestorRelationsData: async (pdfId, pageNum, bbox = null) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/investor-relations/extract`, {
+        page_num: pageNum,
+        bbox: bbox
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error extracting investor relations data:', error);
+      throw error;
+    }
+  },
+
   // Get PDFs grouped by category
   getPDFsByCategory: async () => {
     try {

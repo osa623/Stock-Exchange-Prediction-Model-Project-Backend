@@ -164,6 +164,110 @@ class TOCDetector:
         
         return results
     
+    def get_investor_relations_page_from_toc(self, pdf) -> List[Dict]:
+        """
+        Find pages where INVESTOR RELATIONS appears as main title.
+        Skip TOC - only scan page content directly.
+        
+        Returns:
+            [{'page_num': 45, 'confidence': 0.98, 'evidence': '...', 'source': 'content_scan'}]
+        """
+        # Directly scan all pages for "INVESTOR RELATIONS" as main title
+        results = self._scan_for_investor_relations_pages(pdf)
+        return results
+    
+    def _scan_for_investor_relations_pages(self, pdf) -> List[Dict]: 
+        """
+        Find INVESTOR RELATIONS section, then find all shareholder-related pages.
+        Returns multiple pages (range of 8 pages from title) to capture context.
+        """
+        results = []
+        investor_relations_page_idx = -1
+        
+        # Shareholder Table Indicators (High Confidence)
+        shareholder_indicators = [
+            'TOP 20 MAJOR SHAREHOLDERS',
+            'TOP 20 SHAREHOLDERS',
+            'TWENTY MAJOR SHAREHOLDERS',
+            'MAJOR SHAREHOLDERS',
+            'TOP TWENTY SHAREHOLDERS',
+            'TOP 20 LARGEST SHAREHOLDERS',
+            'TWENTY LARGEST SHAREHOLDERS',
+            'SHAREHOLDING STRUCTURE',
+            'SHAREHOLDER COMPOSITION',
+            'DISTRIBUTION OF SHAREHOLDING',
+            'TOP 20 MAJOR INVESTOR',
+            'TOP 10 MAJOR SHAREHOLDERS',
+            'TWENTY LARGEST SHAREHOLDERS',
+        ]
+        
+        # Step 1: Scan ALL pages for Investor Relations Title AND Shareholder Tables directly
+        
+        for page_idx in range(len(pdf.pages)):
+            try:
+                page = pdf.pages[page_idx]
+                text = page.extract_text() or ""
+                text_upper = text.upper()
+                
+                # Check for TOC indicators - Ignore this page if it looks like a TOC
+                # Heuristic: "Contents" or "Index" at top, and many lines ending in numbers
+                first_lines = text_upper[:500]
+                if ('CONTENTS' in first_lines or 'INDEX' in first_lines) and \
+                   len(re.findall(r'\.\.+\s*\d+', text)) > 5:
+                    continue  # Skip TOC page
+                
+                # Check for "INVESTOR RELATIONS" as a Main Title
+                # Heuristic: It should be in the top part of the page, or be a standalone line
+                if investor_relations_page_idx == -1 and 'INVESTOR RELATIONS' in text_upper:
+                    # check if it's a title (short line)
+                    lines = text_upper.split('\n')
+                    for line in lines[:15]: # Check first 15 lines
+                        if 'INVESTOR RELATIONS' in line and len(line) < 60:
+                            investor_relations_page_idx = page_idx
+                            break
+                
+                # Check for Shareholder Table Captions DIRECTLY
+                for indicator in shareholder_indicators:
+                    if indicator in text_upper:
+                        results.append({
+                            'page_num': page_idx + 1,
+                            'confidence': 0.99, # High confidence for specific table caption
+                            'evidence': f"Found '{indicator}' caption",
+                            'source': 'direct_caption_scan',
+                            'type': 'shareholders_page'
+                        })
+                        break  # Found a table on this page
+                
+            except Exception as e:
+                continue
+        
+        # Step 2: If we found "Investor Relations" section title, include that page range
+        # User requested first ~5-8 pages from the section start
+        if investor_relations_page_idx != -1:
+            # Add range of 8 pages (or until end of PDF)
+            range_end = min(investor_relations_page_idx + 8, len(pdf.pages))
+            for i in range(investor_relations_page_idx, range_end):
+                results.append({
+                    'page_num': i + 1,
+                    'confidence': 0.85, # Good confidence since it's in the section
+                    'evidence': "Within INVESTOR RELATIONS section range",
+                    'source': 'section_range_scan',
+                    'type': 'investor_relations_section'
+                })
+
+        # Deduplicate results based on page_num
+        unique_results = []
+        seen_pages = set()
+        # Sort results by page_num to keep order
+        results.sort(key=lambda x: x['page_num'])
+        
+        for res in results:
+            if res['page_num'] not in seen_pages:
+                unique_results.append(res)
+                seen_pages.add(res['page_num'])
+        
+        return unique_results
+    
     def _find_actual_page(self, pdf, reported_page: int, keywords: List[str]) -> int:
         """
         Find the actual PDF page index from a reported page number.

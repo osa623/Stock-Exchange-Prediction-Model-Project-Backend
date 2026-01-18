@@ -18,9 +18,9 @@ class ColumnType(Enum):
     DESCRIPTION = "description"  # Row labels
     NOTE = "note"  # Note references
     BANK_YEAR1 = "bank_year1"
-    BANK_YEAR2 = "bank_year2"
     GROUP_YEAR1 = "group_year1"
     GROUP_YEAR2 = "group_year2"
+    PAGE = "page"  # Page number
     UNKNOWN = "unknown"
 
 
@@ -54,6 +54,12 @@ class ColumnInterpreter:
         
         # Pattern for years
         self.year_pattern = r'\b(20\d{2})\b'
+
+        # Patterns for page numbers
+        self.page_patterns = [
+            r'\bpage\b',
+            r'\bpg\b',
+        ]
         
         # Patterns for notes
         self.note_patterns = [
@@ -192,6 +198,16 @@ class ColumnInterpreter:
                 return ColumnInfo(
                     index=col_idx,
                     column_type=ColumnType.NOTE,
+                    header_text=header_text,
+                    confidence=0.9
+                )
+        
+        # Check for page column
+        for pattern in self.page_patterns:
+            if re.search(pattern, header_lower):
+                return ColumnInfo(
+                    index=col_idx,
+                    column_type=ColumnType.PAGE,
                     header_text=header_text,
                     confidence=0.9
                 )

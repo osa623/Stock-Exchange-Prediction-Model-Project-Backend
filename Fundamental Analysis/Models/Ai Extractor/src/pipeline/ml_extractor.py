@@ -142,11 +142,50 @@ class MLFinancialExtractor:
                 else:
                     logger.warning(f"⚠️ Could not find pages for: {statement_type}")
             
+            # Step 3: Extract Subsidiary Chart (if present)
+            result['subsidiary_chart'] = self._extract_subsidiary_chart(pdf_path)
+            
             return result
             
         except Exception as e:
             logger.error(f"❌ Error during extraction: {e}", exc_info=True)
             return result
+
+    def _extract_subsidiary_chart(self, pdf_path: Path) -> Dict[str, Any]:
+        """
+        Scan for and extract subsidiary flowchart if present.
+        """
+        logger.info("🔍 Scanning for Subsidiary Flowchart...")
+        chart_data = {"nodes": [], "edges": []}
+        
+        try:
+            from src.extractor.chart_extractor import ChartExtractor
+            extractor = ChartExtractor()
+            
+            with pdfplumber.open(pdf_path) as pdf:
+                # Scan first 150 pages
+                for page_num in range(min(len(pdf.pages), 150)):
+                    try:
+                        page = pdf.pages[page_num]
+                        text = page.extract_text() or ""
+                        text_upper = text.upper()
+                        
+                        # Trigger condition
+                        if "NOTES TO THE FINANCIAL STATEMENTS" in text_upper and "SUBSIDIARY" in text_upper:
+                            logger.info(f"✅ Found Subsidiary Chart on page {page_num + 1}")
+                            chart_data = extractor.extract_from_page(page)
+                            
+                            if chart_data["nodes"]:
+                                logger.info(f"   ✓ Extracted {len(chart_data['nodes'])} nodes and {len(chart_data['edges'])} edges")
+                                return chart_data
+                                
+                    except Exception as e:
+                        continue
+                        
+        except Exception as e:
+            logger.error(f"Error extracting subsidiary chart: {e}")
+            
+        return chart_data
     
     def _find_statement_pages(self, pdf_path: Path) -> Dict[str, List[int]]:
         """

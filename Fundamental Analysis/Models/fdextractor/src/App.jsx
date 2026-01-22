@@ -7,6 +7,7 @@ import CompanyDetails from './pages/CompanyDetails';
 import OtherExtraction from './pages/OtherExtraction';
 import ShareholderPage from './pages/ShareholderPage';
 import InvestorRelationsPage from './pages/InvestorRelationsPage';
+import SubsidiaryPage from './pages/SubsidiaryPage';
 
 function App() {
   return (
@@ -25,6 +26,8 @@ function App() {
           <Route path="/pdf/:pdfId/shareholders" element={<ShareholderPage />} />
           {/* Investor Relations Route - New Flow */}
           <Route path="/pdf/:pdfId/investor-relations" element={<InvestorRelationsPage />} />
+          {/* Subsidiary Route - New Flow */}
+          <Route path="/pdf/:pdfId/subsidiary" element={<SubsidiaryPage />} />
           {/* Legacy Route - Redirect to statements */}
           <Route path="/pdf/:pdfId" element={<PDFDetail />} />
         </Routes>

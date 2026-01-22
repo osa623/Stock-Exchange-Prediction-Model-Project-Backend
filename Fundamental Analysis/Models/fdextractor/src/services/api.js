@@ -141,6 +141,41 @@ export const pdfService = {
       throw error;
     }
   },
+  // Subsidiary Chart Detection and Extraction
+  detectSubsidiaryPages: async (pdfId) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/subsidiary-chart/detect`, {});
+      return response.data;
+    } catch (error) {
+      // If 404/500, we might return empty to avoid breaking UI
+      console.error('Error detecting subsidiary pages:', error);
+      throw error;
+    }
+  },
+
+  getSubsidiaryImages: async (pdfId, pageNumbers) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/subsidiary-chart/images`, {
+        pages: pageNumbers
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting subsidiary images:', error);
+      throw error;
+    }
+  },
+
+  extractSubsidiaryChart: async (pdfId, pageNum) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/subsidiary-chart/extract`, {
+        page_num: pageNum
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error extracting subsidiary chart:', error);
+      throw error;
+    }
+  },
 };
 
 export default api;

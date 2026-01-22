@@ -52,7 +52,7 @@ const PDFCard = ({ pdf }) => {
         <p className="text-xs text-gray-500 font-medium mb-3 uppercase tracking-wide">
           Select Extraction Type
         </p>
-        
+
         {/* Button 1: Financial Statements */}
         <button
           onClick={() => handleExtraction('statements')}
@@ -77,20 +77,21 @@ const PDFCard = ({ pdf }) => {
           Other Data
         </button>
 
-        {/* Button 4: Top 20 Shareholders */}
-        <button
-          onClick={() => navigate(`/pdf/${pdf.id}/shareholders`)}
-          className="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
-        >
-          Top 20 Shareholders
-        </button>
 
-        {/* Button 5: Investor Relations */}
+        {/* Button 4: Investor Relations */}
         <button
           onClick={() => navigate(`/pdf/${pdf.id}/investor-relations`)}
           className="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
         >
-          Investor Relations
+          Top 10 ShareHolders
+        </button>
+
+        {/* Button 5: Subsidiaries */}
+        <button
+          onClick={() => navigate(`/pdf/${pdf.id}/subsidiary`)}
+          className="w-full bg-indigo-100 hover:bg-indigo-200 text-indigo-900 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+        >
+          <span>Subsidiaries Chart</span>
         </button>
       </div>
     </div>

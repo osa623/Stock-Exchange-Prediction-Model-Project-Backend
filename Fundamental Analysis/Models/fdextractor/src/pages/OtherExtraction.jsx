@@ -7,7 +7,7 @@ import ErrorMessage from '../components/ErrorMessage';
 const OtherExtraction = () => {
   const { pdfId } = useParams();
   const navigate = useNavigate();
-  
+
   const [pdf, setPdf] = useState(null);
   const [loading, setLoading] = useState(true);
   const [extracting, setExtracting] = useState(false);
@@ -50,7 +50,7 @@ const OtherExtraction = () => {
     try {
       setExtracting(true);
       setError(null);
-      
+
       // Placeholder extraction - in real implementation, this would call appropriate API
       const result = {
         type: selectedType,
@@ -60,7 +60,7 @@ const OtherExtraction = () => {
         dataPoints: 156,
         summary: `Extracted ${extractionTypes.find(t => t.id === selectedType)?.name} successfully`
       };
-      
+
       setExtractedData(result);
       alert('Data extracted successfully!');
     } catch (err) {
@@ -83,7 +83,7 @@ const OtherExtraction = () => {
       <div className="container mx-auto px-6 py-8">
         {/* Back Button */}
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 mb-6 transition-colors group"
         >
           <span className="text-xl group-hover:-translate-x-1 transition-transform">←</span>
@@ -103,7 +103,7 @@ const OtherExtraction = () => {
                   <p className="text-gray-600 mt-1">Extract specialized data from documents</p>
                 </div>
               </div>
-              
+
               {pdf && (
                 <div className="flex items-center space-x-6 text-sm bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center space-x-2">
@@ -136,11 +136,10 @@ const OtherExtraction = () => {
               <button
                 key={type.id}
                 onClick={() => setSelectedType(type.id)}
-                className={`relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 ${
-                  selectedType === type.id
+                className={`relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 ${selectedType === type.id
                     ? 'ring-4 ring-purple-500 ring-offset-2'
                     : ''
-                }`}
+                  }`}
               >
                 <div className={`bg-gradient-to-br ${type.color} p-6 text-white`}>
                   <div className="text-4xl mb-3">{type.icon}</div>
@@ -163,7 +162,7 @@ const OtherExtraction = () => {
         {selectedType && (
           <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200 mb-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Extraction Configuration</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -175,7 +174,7 @@ const OtherExtraction = () => {
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Output Format
@@ -203,9 +202,8 @@ const OtherExtraction = () => {
             <button
               onClick={handleExtraction}
               disabled={extracting}
-              className={`w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
-                extracting ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${extracting ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
             >
               {extracting ? (
                 <span className="flex items-center justify-center">
@@ -231,7 +229,7 @@ const OtherExtraction = () => {
                 ✓ {extractedData.status}
               </span>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
                 <div className="text-sm text-blue-600 font-medium mb-1">Extraction Type</div>
@@ -239,17 +237,17 @@ const OtherExtraction = () => {
                   {extractionTypes.find(t => t.id === extractedData.type)?.name}
                 </div>
               </div>
-              
+
               <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl">
                 <div className="text-sm text-green-600 font-medium mb-1">Pages Covered</div>
                 <div className="text-lg font-bold text-green-900">{extractedData.pagesCovered}</div>
               </div>
-              
+
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl">
                 <div className="text-sm text-purple-600 font-medium mb-1">Data Points</div>
                 <div className="text-lg font-bold text-purple-900">{extractedData.dataPoints}</div>
               </div>
-              
+
               <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-xl">
                 <div className="text-sm text-orange-600 font-medium mb-1">Extracted At</div>
                 <div className="text-lg font-bold text-orange-900">
@@ -262,7 +260,7 @@ const OtherExtraction = () => {
               <h3 className="font-semibold text-gray-900 mb-2">Summary</h3>
               <p className="text-gray-700">{extractedData.summary}</p>
             </div>
-            
+
             <div className="flex flex-wrap gap-4">
               <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors shadow-md">
                 💾 Save Results

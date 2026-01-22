@@ -8,7 +8,7 @@ import ErrorMessage from '../components/ErrorMessage';
 const PDFDetail = () => {
   const { pdfId } = useParams();
   const navigate = useNavigate();
-  
+
   const [pdf, setPdf] = useState(null);
   const [statements, setStatements] = useState([]);
   const [selectedStatements, setSelectedStatements] = useState(new Set());
@@ -28,7 +28,7 @@ const PDFDetail = () => {
       setLoading(true);
       setExtracting(true);
       setError(null);
-      
+
       const result = await pdfService.extractStatements(pdfId);
       setPdf(result.pdf);
       setStatements(result.statements || []);
@@ -65,7 +65,7 @@ const PDFDetail = () => {
       const newPages = currentPages.includes(pageNum)
         ? currentPages.filter(p => p !== pageNum)
         : [...currentPages, pageNum];
-      
+
       return {
         ...prev,
         [statementType]: newPages
@@ -76,7 +76,7 @@ const PDFDetail = () => {
   const handleExtractData = async () => {
     // Check if any pages are selected
     const totalSelectedPages = Object.values(selectedPages).reduce(
-      (sum, pages) => sum + (pages?.length || 0), 
+      (sum, pages) => sum + (pages?.length || 0),
       0
     );
 
@@ -88,27 +88,27 @@ const PDFDetail = () => {
     try {
       setExtracting(true);
       setError(null);
-      
+
       const result = await pdfService.extractDataFromPages(pdfId, selectedPages);
-      
+
       // Build detailed summary message
       const summary = result.extraction_summary || {};
       let summaryText = 'Data extracted successfully!\n\n';
-      
+
       summaryText += '📊 Extraction Summary:\n';
       summaryText += `Bank Year1: ${summary.Bank?.Year1 || 0} fields\n`;
       summaryText += `Bank Year2: ${summary.Bank?.Year2 || 0} fields\n`;
       summaryText += `Group Year1: ${summary.Group?.Year1 || 0} fields\n`;
       summaryText += `Group Year2: ${summary.Group?.Year2 || 0} fields\n\n`;
-      
+
       summaryText += `📁 Output Files:\n`;
       summaryText += `JSON: ${result.json_file}\n`;
       summaryText += `Excel: ${result.excel_file}\n\n`;
-      
+
       summaryText += `📂 Location: ${result.output_dir}`;
-      
+
       alert(summaryText);
-      
+
     } catch (err) {
       setError(err.message || 'Failed to extract data');
       alert('Error extracting data: ' + (err.message || 'Unknown error'));
@@ -131,7 +131,7 @@ const PDFDetail = () => {
       }));
       await pdfService.submitSelectedStatements(pdfId, selected);
       alert('Statements submitted successfully!');
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       alert(err.message || 'Failed to submit statements');
     } finally {
@@ -162,7 +162,7 @@ const PDFDetail = () => {
       <div className="container mx-auto px-6 py-8">
         {/* Back Button */}
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           className="flex items-center space-x-2 text-gray-600 hover:text-green-600 mb-6 transition-colors group"
         >
           <span className="text-xl group-hover:-translate-x-1 transition-transform">←</span>
@@ -225,22 +225,20 @@ const PDFDetail = () => {
               <button
                 onClick={handleExtractData}
                 disabled={Object.values(selectedPages).reduce((sum, pages) => sum + (pages?.length || 0), 0) === 0 || extracting}
-                className={`bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
-                  Object.values(selectedPages).reduce((sum, pages) => sum + (pages?.length || 0), 0) === 0 || extracting
+                className={`bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${Object.values(selectedPages).reduce((sum, pages) => sum + (pages?.length || 0), 0) === 0 || extracting
                     ? 'opacity-50 cursor-not-allowed'
                     : ''
-                }`}
+                  }`}
               >
                 {extracting ? '⏳ Extracting...' : '🚀 Extract Data'}
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={selectedStatements.size === 0 || submitting}
-                className={`bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
-                  selectedStatements.size === 0 || submitting
+                className={`bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${selectedStatements.size === 0 || submitting
                     ? 'opacity-50 cursor-not-allowed'
                     : ''
-                }`}
+                  }`}
               >
                 {submitting ? '⏳ Submitting...' : '✓ Submit Selected'}
               </button>

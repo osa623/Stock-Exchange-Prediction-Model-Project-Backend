@@ -16,16 +16,16 @@ const InvestorRelationsViewer = ({ pdfId }) => {
     try {
       setDetecting(true);
       setError(null);
-      
+
       const data = await pdfService.detectInvestorRelations(pdfId);
       setDetectedPages(data);
-      
+
       // Auto-load images for all detected pages
       if (data.pages && data.pages.length > 0) {
         const pageNumbers = data.pages.map(p => p.page_num);
         await loadImagesForAllPages(pageNumbers);
       }
-      
+
     } catch (err) {
       setError(err.message || 'Failed to detect investor relations pages');
     } finally {
@@ -40,16 +40,16 @@ const InvestorRelationsViewer = ({ pdfId }) => {
       setImages([]);
       setSelectedImage(null);
       setExtractedData(null);
-      
+
       const data = await pdfService.getInvestorRelationsImages(pdfId, pageNumbers);
       setImages(data.images);
-      
+
       // Auto-select first image
       if (data.images && data.images.length > 0) {
         setSelectedImage(data.images[0]);
         setSelectedPage(data.images[0].page_num);
       }
-      
+
     } catch (err) {
       setError(err.message || 'Failed to load images');
     }
@@ -61,26 +61,29 @@ const InvestorRelationsViewer = ({ pdfId }) => {
 
   // Step 3: Extract data from selected image
   const handleExtractData = async () => {
-    if (!selectedPage || !selectedImage) {
+    if (!selectedImage) {
       setError('Please select a page and image first');
       return;
     }
-    
+
     try {
       setExtracting(true);
       setError(null);
-      
+
       const bbox = selectedImage.bbox || null;
-      const data = await pdfService.extractInvestorRelationsData(pdfId, selectedPage, bbox);
-      
+      // Use the page_num from the selected image to ensure sync
+      const pageNum = selectedImage.page_num || selectedPage;
+
+      const data = await pdfService.extractInvestorRelationsData(pdfId, pageNum, bbox);
+
       setExtractedData(data);
-      
+
       if (data.success) {
         alert(`✅ Successfully extracted investor relations data!\\n\\nData saved to: ${data.saved_to}`);
       } else {
         setError('Extraction completed but no data found. Try selecting a different image.');
       }
-      
+
     } catch (err) {
       setError(err.message || 'Failed to extract data');
     } finally {
@@ -91,7 +94,7 @@ const InvestorRelationsViewer = ({ pdfId }) => {
   // Export to JSON
   const handleExportJSON = () => {
     if (!extractedData) return;
-    
+
     const dataStr = JSON.stringify(extractedData, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -115,13 +118,12 @@ const InvestorRelationsViewer = ({ pdfId }) => {
               Detect pages using content analysis and extract investor relations data
             </p>
           </div>
-          
+
           <button
             onClick={handleDetectPages}
             disabled={detecting}
-            className={`px-6 py-3 bg-black text-white rounded-lg font-medium transition-all duration-200 ${
-              detecting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'
-            }`}
+            className={`px-6 py-3 bg-black text-white rounded-lg font-medium transition-all duration-200 ${detecting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'
+              }`}
           >
             {detecting ? 'Detecting...' : 'Detect Pages'}
           </button>
@@ -141,7 +143,7 @@ const InvestorRelationsViewer = ({ pdfId }) => {
           <h3 className="text-xl font-semibold text-gray-900 mb-6">
             Detected Pages ({detectedPages.pages.length})
           </h3>
-          
+
           <div className="space-y-4">
             {detectedPages.pages.map((page, idx) => (
               <div
@@ -167,13 +169,12 @@ const InvestorRelationsViewer = ({ pdfId }) => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="ml-6">
-                    <span className={`px-4 py-2 rounded-lg text-xs font-medium ${
-                      page.type === 'shareholders_page' 
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-gray-200 text-gray-700'
-                    }`}>
+                    <span className={`px-4 py-2 rounded-lg text-xs font-medium ${page.type === 'shareholders_page'
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-200 text-gray-700'
+                      }`}>
                       {page.type === 'shareholders_page' ? 'Shareholder Data' : 'Investor Relations'}
                     </span>
                   </div>
@@ -194,48 +195,40 @@ const InvestorRelationsViewer = ({ pdfId }) => {
             <button
               onClick={handleExtractData}
               disabled={extracting || !selectedImage}
-              className={`px-6 py-3 bg-black text-white rounded-lg font-medium transition-all duration-200 ${
-                extracting || !selectedImage ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'
-              }`}
+              className={`px-6 py-3 bg-black text-white rounded-lg font-medium transition-all duration-200 ${extracting || !selectedImage ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'
+                }`}
             >
               {extracting ? 'Extracting...' : 'Extract Selected Page'}
             </button>
           </div>
-          
-          <div className="space-y-8">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {images.map((image, idx) => (
-              <div key={idx} className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+              <div key={idx} className="bg-white rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200 flex flex-col">
                 {/* Page Header */}
-                <div className="bg-white border-b border-gray-200 px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900">Page {image.page_num}</h4>
-                      <p className="text-sm text-gray-500 mt-1">Full Page Preview</p>
-                    </div>
-                    <button
-                      onClick={() => setSelectedImage(image)}
-                      className={`px-5 py-2 rounded-lg font-medium transition-all duration-200 ${
-                        selectedImage === image
-                          ? 'bg-black text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
+                  <h4 className="font-semibold text-gray-900 text-sm">Page {image.page_num}</h4>
+                  <button
+                    onClick={() => { setSelectedImage(image); setSelectedPage(image.page_num); }}
+                    className={`px-3 py-1 rounded text-xs font-medium transition-colors duration-200 ${selectedImage === image
+                      ? 'bg-black text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
-                    >
-                      {selectedImage === image ? 'Selected' : 'Select'}
-                    </button>
-                  </div>
+                  >
+                    {selectedImage === image ? 'Selected' : 'Select'}
+                  </button>
                 </div>
-                
+
                 {/* Image Preview */}
                 <div
-                  onClick={() => setSelectedImage(image)}
-                  className={`cursor-pointer p-6 transition-all duration-200 ${
-                    selectedImage === image ? 'bg-gray-100 ring-2 ring-black' : 'hover:bg-gray-100'
-                  }`}
+                  onClick={() => { setSelectedImage(image); setSelectedPage(image.page_num); }}
+                  className={`cursor-pointer p-2 flex-grow flex items-center justify-center bg-gray-50 transition-colors duration-200 ${selectedImage === image ? 'bg-gray-100 ring-2 ring-inset ring-black' : 'hover:bg-gray-100'
+                    }`}
                 >
                   <img
                     src={`data:image/png;base64,${image.image_data}`}
                     alt={`Page ${image.page_num}`}
-                    className="w-full h-auto object-contain"
+                    className="max-w-full max-h-64 object-contain shadow-sm"
                   />
                 </div>
               </div>
@@ -265,7 +258,7 @@ const InvestorRelationsViewer = ({ pdfId }) => {
               Download JSON
             </button>
           </div>
-          
+
           {/* Display structured data if available */}
           {extractedData.data && typeof extractedData.data === 'object' && Object.keys(extractedData.data).length > 0 ? (
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -277,7 +270,7 @@ const InvestorRelationsViewer = ({ pdfId }) => {
                         Attribute
                       </th>
                       {/* Extract all unique years from the data */}
-                      {Object.values(extractedData.data)[0] && 
+                      {Object.values(extractedData.data)[0] &&
                         Object.keys(Object.values(extractedData.data)[0]).map((year, idx) => (
                           <th key={idx} className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                             {year}
@@ -311,7 +304,7 @@ const InvestorRelationsViewer = ({ pdfId }) => {
               </pre>
             </div>
           )}
-          
+
           {/* Raw table info */}
           {extractedData.raw_table && (
             <div className="mt-6">

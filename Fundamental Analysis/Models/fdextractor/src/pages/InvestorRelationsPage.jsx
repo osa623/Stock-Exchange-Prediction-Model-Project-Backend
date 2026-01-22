@@ -10,7 +10,7 @@ const InvestorRelationsPage = () => {
       <div className="container mx-auto px-6 py-8">
         {/* Back Button */}
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 mb-6 transition-colors group"
         >
           <span className="text-xl group-hover:-translate-x-1 transition-transform">←</span>
@@ -24,11 +24,11 @@ const InvestorRelationsPage = () => {
               <span className="text-white text-2xl">📊</span>
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">Investor Relations Extraction</h1>
-              <p className="text-gray-600 mt-1">Extract investor relations data from PDF using OCR and TOC detection</p>
+              <h1 className="text-4xl font-bold text-gray-900">ShareHolders Extraction</h1>
+              <p className="text-gray-600 mt-1">Extract ShareHolders data from PDF using OCR and TOC detection</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-6 text-sm bg-gray-50 p-4 rounded-lg">
             <div className="flex items-center space-x-2">
               <span className="text-gray-500">📄 PDF ID:</span>

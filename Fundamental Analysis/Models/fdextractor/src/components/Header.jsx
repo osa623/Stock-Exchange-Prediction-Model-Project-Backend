@@ -5,6 +5,16 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+
+  const pathNames = {
+
+    '/home': 'Home Section',
+    '/dashboard': 'Annual PDF Extractor',
+  }
+
+
+  const currentSection = pathNames[location.pathname] || 'Unknown Section';
+
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm">
       <div className="container mx-auto px-6 py-4">
@@ -15,11 +25,13 @@ const Header = () => {
               onClick={() => navigate('/')}
             >
               <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform duration-200">
-                <span className="text-white text-lg font-bold">FD</span>
+                <span className="text-white text-lg font-bold">BL</span>
               </div>
               <div>
                 <h1 className="text-xl font-bold flex text-gray-900">
-                  BUYZONLABS<div className='font-thin px-2'>Panel ---</div>
+                  BUYZONLABS<div className='font-thin flex items-center px-2'>Panel ---
+                    <h2 className='text-sm px-2 text-gray-500'>{currentSection}</h2>
+                  </div>
                 </h1>
                 <span className="text-gray-500 text-xs">Admin Opeartions</span>
               </div>
@@ -30,7 +42,7 @@ const Header = () => {
 
             <button
               onClick={() => navigate('/home')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${location.pathname === '/'
+              className={`px-4 py-2 rounded-lg border-2 border-black font-medium transition-all duration-200 ${location.pathname === '/'
                 ? 'bg-gray-900 text-white'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
@@ -38,15 +50,6 @@ const Header = () => {
               Back
             </button>
 
-            <button
-              onClick={() => navigate('/')}
-              className={`px-4 py-2 rounded-lg border-2 border-black  font-medium transition-all duration-200 ${location.pathname === '/'
-                ? 'bg-gray-100 text-gray-900'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-            >
-              PDF Extractor
-            </button>
 
 
             <div className="flex items-center space-x-3">

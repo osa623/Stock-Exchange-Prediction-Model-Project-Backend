@@ -10,7 +10,7 @@ const Header = () => {
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div 
+            <div
               className="flex items-center space-x-3 cursor-pointer group"
               onClick={() => navigate('/')}
             >
@@ -18,26 +18,37 @@ const Header = () => {
                 <span className="text-white text-lg font-bold">FD</span>
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">
-                  FD Extractor
+                <h1 className="text-xl font-bold flex text-gray-900">
+                  BUYZONLABS<div className='font-thin px-2'>Panel ---</div>
                 </h1>
-                <span className="text-gray-500 text-xs">Financial Data Intelligence</span>
+                <span className="text-gray-500 text-xs">Admin Opeartions</span>
               </div>
             </div>
           </div>
-          
+
           <nav className="flex items-center space-x-6">
+
+            <button
+              onClick={() => navigate('/home')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${location.pathname === '/'
+                ? 'bg-gray-900 text-white'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+            >
+              Back
+            </button>
+
             <button
               onClick={() => navigate('/')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                location.pathname === '/'
-                  ? 'bg-gray-100 text-gray-900'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-              }`}
+              className={`px-4 py-2 rounded-lg border-2 border-black  font-medium transition-all duration-200 ${location.pathname === '/'
+                ? 'bg-gray-100 text-gray-900'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
             >
-              Dashboard
+              PDF Extractor
             </button>
-            
+
+
             <div className="flex items-center space-x-3">
               <div className="text-right hidden md:block">
                 <div className="text-sm font-medium text-gray-900">Admin User</div>

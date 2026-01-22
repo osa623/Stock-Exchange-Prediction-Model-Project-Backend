@@ -345,20 +345,6 @@ def health_check():
     return jsonify({"status": "ok", "service": "FD Extractor API"}), 200
 
 
-# Add an endpoint to get all pdf by categories
-
-@app.route('/api/pdfs/by-category', methods=['GET'])
-def get_pdfs_by_category():
-    """Get all PDFs from the raw data folder grouped by category"""
-    try:
-        pdfs_by_category = scan_pdfs()
-        return jsonify(pdfs_by_category), 200
-    except Exception as e:
-        logger.error(f"Error fetching PDFs by category: {str(e)}")
-        return jsonify({"error": str(e)}), 500    
-
-
-
 @app.route('/api/pdfs', methods=['GET'])
 def get_all_pdfs():
     """Get all PDFs from the raw data folder"""

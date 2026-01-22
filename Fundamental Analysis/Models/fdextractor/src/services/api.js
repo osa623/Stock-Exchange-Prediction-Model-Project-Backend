@@ -11,6 +11,8 @@ const api = axios.create({
 });
 
 export const pdfService = {
+
+
   // Fetch all PDFs from the input folder
   getAllPDFs: async () => {
     try {
@@ -18,6 +20,28 @@ export const pdfService = {
       return response.data;
     } catch (error) {
       console.error('Error fetching PDFs:', error);
+      throw error;
+    }
+  },
+
+
+  getRawFileStructure: async () => {
+    try {
+      const response = await api.get('/files/raw');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching raw file structure:', error);
+      throw error;
+    }
+  },
+
+  //get all pdfs by categories
+  getAllPDFsByCategory: async () => {
+    try {
+      const response = await api.get('/pdfs/by-category');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching PDFs by category:', error);
       throw error;
     }
   },

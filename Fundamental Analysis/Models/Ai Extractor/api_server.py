@@ -320,6 +320,7 @@ def scan_pdfs():
                 "id": f"{category_dir.name}_{pdf_file.stem}",
                 "name": pdf_file.name,
                 "path": str(pdf_file),
+                "relative_path": str(pdf_file.relative_to(RAW_DATA_PATH)).replace('\\', '/'),
                 "company": pdf_file.stem.replace("_", " ").title(),
                 "category": category_name,
                 "pages": "Unknown"
@@ -470,7 +471,7 @@ def get_image(filename):
 
 
 @app.route('/api/pdfs/by-category', methods=['GET'])
-def get_pdfs_by_category():
+def fetch_pdfs_by_category():
     """Get PDFs organized by category"""
     try:
         pdfs_by_category = scan_pdfs()
@@ -1241,7 +1242,59 @@ def extract_subsidiary_chart_endpoint(pdf_id):
         return jsonify({'error': str(e)}), 500
 
 
+
+@app.route('/api/files/raw', methods=['GET'])
+def get_raw_files_structure():
+    """
+    Get recursive folder structure of data/raw
+    Returns:
+        JSON object representing the file tree
+    """
+    def scan_directory(path):
+        name = os.path.basename(path)
+        if os.path.isdir(path):
+            children = []
+            try:
+                # List directory contents sorted by name
+                for entry in sorted(os.listdir(path)):
+                    full_path = os.path.join(path, entry)
+                    # Skip hidden files
+                    if entry.startswith('.'):
+                        continue
+                    children.append(scan_directory(full_path))
+            except PermissionError:
+                pass
+            
+            return {
+                "name": name,
+                "type": "directory",
+                "path": str(Path(path).relative_to(RAW_DATA_PATH)).replace('\\', '/'),
+                "children": children
+            }
+        else:
+            return {
+                "name": name,
+                "type": "file",
+                "path": str(Path(path).relative_to(RAW_DATA_PATH)).replace('\\', '/'),
+                "size": os.path.getsize(path)
+            }
+
+    try:
+        if not RAW_DATA_PATH.exists():
+            return jsonify({"name": "raw", "type": "directory", "children": []}), 200
+            
+        # Manually construct root to avoid "data/raw" as the name if prefer "raw"
+        structure = scan_directory(str(RAW_DATA_PATH))
+        
+        return jsonify(structure), 200
+        
+    except Exception as e:
+        logger.error(f"Error scanning file structure: {str(e)}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
+
     logger.info("Starting FD Extractor API Server...")
     logger.info(f"Raw data path: {RAW_DATA_PATH}")
     logger.info(f"Processed data path: {PROCESSED_DATA_PATH}")

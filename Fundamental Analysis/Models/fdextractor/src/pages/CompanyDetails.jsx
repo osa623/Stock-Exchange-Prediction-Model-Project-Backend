@@ -7,7 +7,7 @@ import ErrorMessage from '../components/ErrorMessage';
 const CompanyDetails = () => {
   const { pdfId } = useParams();
   const navigate = useNavigate();
-  
+
   const [pdf, setPdf] = useState(null);
   const [loading, setLoading] = useState(true);
   const [extracting, setExtracting] = useState(false);
@@ -36,7 +36,7 @@ const CompanyDetails = () => {
     try {
       setExtracting(true);
       setError(null);
-      
+
       // This would call a new API endpoint for company details extraction
       // For now, we'll show a placeholder
       const result = {
@@ -52,7 +52,7 @@ const CompanyDetails = () => {
         employees: '1000+',
         description: 'Leading financial services provider...'
       };
-      
+
       setExtractedData(result);
       alert('Company details extracted successfully!');
     } catch (err) {
@@ -75,7 +75,7 @@ const CompanyDetails = () => {
       <div className="container mx-auto px-6 py-8">
         {/* Back Button */}
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 mb-6 transition-colors group"
         >
           <span className="text-xl group-hover:-translate-x-1 transition-transform">←</span>
@@ -95,7 +95,7 @@ const CompanyDetails = () => {
                   <p className="text-gray-600 mt-1">Extract comprehensive company information</p>
                 </div>
               </div>
-              
+
               {pdf && (
                 <div className="flex items-center space-x-6 text-sm bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center space-x-2">
@@ -128,7 +128,7 @@ const CompanyDetails = () => {
               <p className="text-gray-600 mb-6">
                 Select the type of company information you want to extract from this document.
               </p>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center p-4 border-2 border-blue-200 rounded-xl bg-blue-50">
                   <input type="checkbox" id="basic" className="w-5 h-5 text-blue-600" defaultChecked />
@@ -137,7 +137,7 @@ const CompanyDetails = () => {
                     <div className="text-sm text-gray-600">Name, registration, contact details</div>
                   </label>
                 </div>
-                
+
                 <div className="flex items-center p-4 border-2 border-blue-200 rounded-xl bg-blue-50">
                   <input type="checkbox" id="corporate" className="w-5 h-5 text-blue-600" defaultChecked />
                   <label htmlFor="corporate" className="ml-3 flex-1">
@@ -145,7 +145,7 @@ const CompanyDetails = () => {
                     <div className="text-sm text-gray-600">Board members, executives, ownership</div>
                   </label>
                 </div>
-                
+
                 <div className="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-200 transition-colors">
                   <input type="checkbox" id="business" className="w-5 h-5 text-blue-600" />
                   <label htmlFor="business" className="ml-3 flex-1">
@@ -158,9 +158,8 @@ const CompanyDetails = () => {
               <button
                 onClick={handleExtractCompanyDetails}
                 disabled={extracting}
-                className={`mt-6 w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
-                  extracting ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`mt-6 w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${extracting ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               >
                 {extracting ? (
                   <span className="flex items-center justify-center">
@@ -213,7 +212,7 @@ const CompanyDetails = () => {
                 </div>
               ))}
             </div>
-            
+
             <div className="mt-6 flex space-x-4">
               <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors shadow-md">
                 💾 Save Results

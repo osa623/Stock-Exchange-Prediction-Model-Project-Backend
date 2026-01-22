@@ -11,6 +11,8 @@ const api = axios.create({
 });
 
 export const pdfService = {
+
+
   // Fetch all PDFs from the input folder
   getAllPDFs: async () => {
     try {
@@ -18,6 +20,28 @@ export const pdfService = {
       return response.data;
     } catch (error) {
       console.error('Error fetching PDFs:', error);
+      throw error;
+    }
+  },
+
+
+  getRawFileStructure: async () => {
+    try {
+      const response = await api.get('/files/raw');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching raw file structure:', error);
+      throw error;
+    }
+  },
+
+  //get all pdfs by categories
+  getAllPDFsByCategory: async () => {
+    try {
+      const response = await api.get('/pdfs/by-category');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching PDFs by category:', error);
       throw error;
     }
   },
@@ -138,6 +162,41 @@ export const pdfService = {
       return response.data;
     } catch (error) {
       console.error('Error extracting data from pages:', error);
+      throw error;
+    }
+  },
+  // Subsidiary Chart Detection and Extraction
+  detectSubsidiaryPages: async (pdfId) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/subsidiary-chart/detect`, {});
+      return response.data;
+    } catch (error) {
+      // If 404/500, we might return empty to avoid breaking UI
+      console.error('Error detecting subsidiary pages:', error);
+      throw error;
+    }
+  },
+
+  getSubsidiaryImages: async (pdfId, pageNumbers) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/subsidiary-chart/images`, {
+        pages: pageNumbers
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting subsidiary images:', error);
+      throw error;
+    }
+  },
+
+  extractSubsidiaryChart: async (pdfId, pageNum) => {
+    try {
+      const response = await api.post(`/pdfs/${pdfId}/subsidiary-chart/extract`, {
+        page_num: pageNum
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error extracting subsidiary chart:', error);
       throw error;
     }
   },

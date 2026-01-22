@@ -70,18 +70,7 @@ const LoginPage = () => {
 
                 {/* Footer Links */}
                 <footer className="mt-8 text-center space-y-4">
-                    <a href="#" className="block text-sm text-gray-500 hover:underline decoration-1 underline-offset-4">
-                        Forgot password?
-                    </a>
 
-                    <div className="pt-6 border-t border-gray-100">
-                        <p className="text-sm text-gray-500">
-                            Don't have an account?{' '}
-                            <a href="#" className="font-medium text-black hover:underline underline-offset-4">
-                                Create one now
-                            </a>
-                        </p>
-                    </div>
                 </footer>
             </div>
         </div>

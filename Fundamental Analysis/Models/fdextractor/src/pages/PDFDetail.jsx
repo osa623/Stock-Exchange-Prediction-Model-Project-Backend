@@ -14,7 +14,7 @@ const PDFDetail = () => {
   const [selectedStatements, setSelectedStatements] = useState(new Set());
   const [selectedImages, setSelectedImages] = useState({}); // Track selected image per statement
   const [selectedPages, setSelectedPages] = useState({}); // Track selected pages per statement type
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);// Track selected pages per statement type
   const [extracting, setExtracting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -226,8 +226,8 @@ const PDFDetail = () => {
                 onClick={handleExtractData}
                 disabled={Object.values(selectedPages).reduce((sum, pages) => sum + (pages?.length || 0), 0) === 0 || extracting}
                 className={`bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${Object.values(selectedPages).reduce((sum, pages) => sum + (pages?.length || 0), 0) === 0 || extracting
-                    ? 'opacity-50 cursor-not-allowed'
-                    : ''
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
                   }`}
               >
                 {extracting ? '⏳ Extracting...' : '🚀 Extract Data'}
@@ -236,8 +236,8 @@ const PDFDetail = () => {
                 onClick={handleSubmit}
                 disabled={selectedStatements.size === 0 || submitting}
                 className={`bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${selectedStatements.size === 0 || submitting
-                    ? 'opacity-50 cursor-not-allowed'
-                    : ''
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
                   }`}
               >
                 {submitting ? '⏳ Submitting...' : '✓ Submit Selected'}

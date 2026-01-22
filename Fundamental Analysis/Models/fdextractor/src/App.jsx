@@ -9,6 +9,7 @@ import ShareholderPage from './pages/ShareholderPage';
 import InvestorRelationsPage from './pages/InvestorRelationsPage';
 import SubsidiaryPage from './pages/SubsidiaryPage';
 import Home from './pages/Home';
+import LoginPage from './pages/LoginPage';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Header />
         <Routes>
           <Route path="/home" element={<Home />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/pdf/:pdfId/statements" element={<PDFDetail />} />
           <Route path="/pdf/:pdfId/company" element={<CompanyDetails />} />

@@ -10,6 +10,7 @@ const Header = () => {
 
     '/home': 'Home Section',
     '/dashboard': 'Annual PDF Extractor',
+    '/login': 'Login Section',
   }
 
 
@@ -40,27 +41,41 @@ const Header = () => {
 
           <nav className="flex items-center space-x-6">
 
-            <button
-              onClick={() => navigate('/home')}
-              className={`px-4 py-2 rounded-lg border-2 border-black font-medium transition-all duration-200 ${location.pathname === '/'
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-            >
-              Back
-            </button>
+            {location.pathname === '/login' ? (
+              <button
+                onClick={() => navigate('/home')}
+                className={`hidden px-4 py-2 rounded-lg border-2 border-black font-medium transition-all duration-200 ${location.pathname === '/'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+              >
+                Back
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/home')}
+                className={`px-4 py-2 rounded-lg border-2 border-black font-medium transition-all duration-200 ${location.pathname === '/login'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+              >
+                Back
+              </button>
+            )}
 
 
-
-            <div className="flex items-center space-x-3">
-              <div className="text-right hidden md:block">
-                <div className="text-sm font-medium text-gray-900">Admin User</div>
-                <div className="text-xs text-gray-500">Administrator</div>
-              </div>
-              <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:bg-gray-700 transition-colors duration-200">
-                A
-              </div>
-            </div>
+            {location.pathname === '/login' ? null
+              : (
+                <div className="flex items-center space-x-3">
+                  <div className="text-right hidden md:block">
+                    <div className="text-sm font-medium text-gray-900">Admin User</div>
+                    <div className="text-xs text-gray-500">Administrator</div>
+                  </div>
+                  <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:bg-gray-700 transition-colors duration-200">
+                    A
+                  </div>
+                </div>
+              )}
           </nav>
         </div>
       </div>

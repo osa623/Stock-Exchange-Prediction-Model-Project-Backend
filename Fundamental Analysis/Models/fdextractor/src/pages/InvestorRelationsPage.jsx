@@ -10,7 +10,7 @@ const InvestorRelationsPage = () => {
       <div className="container mx-auto px-6 py-8">
         {/* Back Button */}
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 mb-6 transition-colors group"
         >
           <span className="text-xl group-hover:-translate-x-1 transition-transform">←</span>

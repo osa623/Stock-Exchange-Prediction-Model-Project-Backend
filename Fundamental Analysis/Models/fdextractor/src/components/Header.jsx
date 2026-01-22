@@ -23,7 +23,7 @@ const Header = () => {
           <div className="flex items-center space-x-4">
             <div
               className="flex items-center space-x-3 cursor-pointer group"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/dashbaord')}
             >
               <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform duration-200">
                 <span className="text-white text-lg font-bold">BL</span>

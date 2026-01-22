@@ -99,7 +99,7 @@ const SubsidiaryPage = () => {
             {/* Page Header */}
             <div className="flex items-center space-x-4 mb-8">
                 <button
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/dashboard')}
                     className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                 >
                     <ArrowLeftIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
@@ -169,8 +169,8 @@ const SubsidiaryPage = () => {
                                         setExtractionResult(null); // Reset result on page change
                                     }}
                                     className={`cursor-pointer rounded-xl border-2 transition-all duration-200 overflow-hidden relative group aspect-[3/4] ${selectedPage === img.page_num
-                                            ? 'border-indigo-500 ring-2 ring-indigo-200 dark:ring-indigo-900 shadow-lg scale-[1.02]'
-                                            : 'border-gray-200 dark:border-slate-700 hover:border-indigo-300 hover:shadow-md'
+                                        ? 'border-indigo-500 ring-2 ring-indigo-200 dark:ring-indigo-900 shadow-lg scale-[1.02]'
+                                        : 'border-gray-200 dark:border-slate-700 hover:border-indigo-300 hover:shadow-md'
                                         }`}
                                 >
                                     <img

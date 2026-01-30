@@ -7,3 +7,5 @@ any part of this codebase is **strictly prohibited** without explicit
 written permission from the author.
 
 © 2026 Osanda Muthukumarana. All rights reserved.
+
+https://github.com/osa623/Stock-Exchange-Prediction-Model-Project-Backend.git : repo

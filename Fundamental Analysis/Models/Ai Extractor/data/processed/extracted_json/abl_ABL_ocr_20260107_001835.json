@@ -1,0 +1,422 @@
+{
+  "pdf_id": "abl_ABL",
+  "extraction_date": "2026-01-07T00:18:35.406056",
+  "statements": {
+    "income": {
+      "page_240": {
+        "raw_text_lines": 97,
+        "parsed_items": 29,
+        "data": {
+          "Annual Report 2024": {},
+          "STATEMENT OF PROFIT AND LOSS": {},
+          "Note": {
+            "2024": "2024"
+          },
+          "Rs.": {},
+          "Financing Income": {
+            "2024": "15,399,562,261",
+            "2023": "17,238,372,606"
+          },
+          "Financing Expenses": {
+            "2024": "(8,525,272,891)",
+            "2023": "(10,743,449,941)"
+          },
+          "Net Financing Income": {
+            "2024": "6,874,289,370",
+            "2023": "6,494,922,665"
+          },
+          "Net Fee and Commission Income": {
+            "2024": "1,077,337,861",
+            "2023": "931,310,583"
+          },
+          "Net Trading Income": {
+            "2024": "693,112,850",
+            "2023": "1,765,213,774"
+          },
+          "Net Gains / (Losses) from Financial Assets at Fair Value Through Profit or Loss": {
+            "2024": "38,985,111",
+            "2023": "15,112,806"
+          },
+          "Net Gains / (Losses) from Derecognition of Financial Assets": {
+            "2024": "(69,917)",
+            "2023": "982,956"
+          },
+          "Net Other Operating Income": {
+            "2024": "5,989,723",
+            "2023": "2,982,534"
+          },
+          "Total Operating Income": {
+            "2024": "8,689,644,998",
+            "2023": "9,210,525,318"
+          },
+          "Impairment on Financial Assets": {
+            "2024": "(289,612,927)",
+            "2023": "(2,120,743,289)"
+          },
+          "Net Operating Income": {
+            "2024": "8,400,032,071",
+            "2023": "7,089,782,029"
+          },
+          "Personnel Expenses": {
+            "2024": "2,274,493,660",
+            "2023": "1,975,989,769"
+          },
+          "Depreciation of Property, Plant, Equipment and Right-of-Use Assets": {
+            "2024": "256,903,664",
+            "2023": "249,465,480"
+          },
+          "Amortisation of Intangible Assets": {
+            "2024": "64,936,795",
+            "2023": "58,137,560"
+          },
+          "Other Operating Expenses": {
+            "2024": "2,012,679,625",
+            "2023": "1,587,478,916"
+          },
+          "Total Operating Expenses": {
+            "2024": "4,609,013,744",
+            "2023": "3,871,071,725"
+          },
+          "Operating Profit Before VAT on Financial Services & Social Security Contribution": {},
+          "Levy": {
+            "2024": "3,791,018,327",
+            "2023": "3,218,710,304"
+          },
+          "VAT on Financial Services": {
+            "2024": "(886,820,214)",
+            "2023": "(797,380,931)"
+          },
+          "Social Security Contribution Levy": {
+            "2024": "(117,354,789)",
+            "2023": "(109,138,773)"
+          },
+          "Profit Before Tax": {
+            "2024": "2,786,843,324",
+            "2023": "2,312,190,600"
+          },
+          "Tax Expense": {
+            "2024": "(1,012,177,592)",
+            "2023": "(925,414,505)"
+          },
+          "Profit for the Year": {
+            "2024": "1,774,665,732",
+            "2023": "1,386,776,095"
+          },
+          "Earnings Per Share - Basic": {
+            "2024": "3.22",
+            "2023": "2.52"
+          },
+          "Earnings Per Share -  Diluted": {
+            "2024": "3.22",
+            "2023": "2.52"
+          }
+        },
+        "full_text": "238\nAnnual Report 2024\nSTATEMENT OF PROFIT AND LOSS\nNote\n2024\nRs.\n2023\nRs.\nFinancing Income\n4\n15,399,562,261\n17,238,372,606\nFinancing Expenses\n5\n(8,525,272,891)\n(10,743,449,941)\nNet Financing Income\n6,874,289,370\n6,494,922,665\nNet Fee and Commission Income\n6\n1,077,337,861\n931,310,583\nNet Trading Income\n7\n693,112,850\n1,765,213,774\nNet Gains / (Losses) from Financial Assets at Fair Value Through Profit or Loss\n8\n38,985,111\n15,112,806\nNet Gains / (Losses) from Derecognition of Financial Assets\n9\n(69,917)\n982,956\nNet Other Operating Income\n10\n5,989,723\n2,982,534\nTotal Operating Income\n8,689,644,998\n9,210,525,318\nImpairment on Financial Assets\n11\n(289,612,927)\n(2,120,743,289)\nNet Operating Income\n8,400,032,071\n7,089,782,029\nPersonnel Expenses\n12\n2,274,493,660\n1,975,989,769\nDepreciation of Property, Plant, Equipment and Right-of-Use Assets\n26\n256,903,664\n249,465,480\nAmortisation of Intangible Assets\n27\n64,936,795\n58,137,560\nOther Operating Expenses\n13\n2,012,679,625\n1,587,478,916\nTotal Operating Expenses\n4,609,013,744\n3,871,071,725\nOperating Profit Before VAT on Financial Services & Social Security Contribution\nLevy\n3,791,018,327\n3,218,710,304\nVAT on Financial Services\n(886,820,214)\n(797,380,931)\nSocial Security Contribution Levy\n(117,354,789)\n(109,138,773)\nProfit Before Tax\n2,786,843,324\n2,312,190,600\nTax Expense\n14\n(1,012,177,592)\n(925,414,505)\nProfit for the Year\n1,774,665,732\n1,386,776,095\nEarnings Per Share - Basic\n15\n3.22\n2.52\nEarnings Per Share -  Diluted\n15\n3.22\n2.52\nThe Accounting Policies and Notes on pages 244 through 313 form an integral part of the Financial Statements."
+      }
+    },
+    "balance": {
+      "page_242": {
+        "raw_text_lines": 98,
+        "parsed_items": 29,
+        "data": {
+          "Annual Report 2024": {},
+          "STATEMENT OF FINANCIAL POSITION": {},
+          "Note": {
+            "2024": "2024"
+          },
+          "Rs.": {},
+          "Assets": {},
+          "Cash and Cash Equivalents": {
+            "2024": "17,070,764,566",
+            "2023": "11,100,863,400"
+          },
+          "Balance with Central Bank of Sri Lanka": {
+            "2024": "7,078,039,326",
+            "2023": "9,446,862,668"
+          },
+          "Placements with Banks": {
+            "2024": "38,311,689,750",
+            "2023": "42,474,569,846"
+          },
+          "Placements with Licensed Finance Companies": {
+            "2024": "507,640,396",
+            "2023": "80,783"
+          },
+          "Derivative Financial Assets": {
+            "2024": "177,460,850",
+            "2023": "194,267,095"
+          },
+          "Financial Assets Recognised through Profit or Loss - Measured at Fair Value": {
+            "2024": "70,216,929",
+            "2023": "8,994,233"
+          },
+          "Financial Assets at Amortised Cost - Financing and Receivables to Other Customers": {
+            "2024": "111,301,849,020",
+            "2023": "89,658,059,768"
+          },
+          "Financial Assets Measured at Fair Value through Other Comprehensive Income": {
+            "2024": "348,710,504",
+            "2023": "319,000,406"
+          },
+          "Other Assets - Financial": {
+            "2024": "2,829,580,181",
+            "2023": "2,006,908,679"
+          },
+          "Property, Plant, Equipment and Right-of-Use Assets": {
+            "2024": "2,968,026,601",
+            "2023": "2,775,396,192"
+          },
+          "Intangible Assets": {
+            "2024": "337,562,608",
+            "2023": "379,309,190"
+          },
+          "Other Assets - Non Financial": {
+            "2024": "510,950,335",
+            "2023": "303,033,651"
+          },
+          "Deferred Tax Assets": {
+            "2024": "824,316,848",
+            "2023": "784,429,734"
+          },
+          "Total Assets": {
+            "2024": "182,336,807,914",
+            "2023": "159,451,775,645"
+          },
+          "Liabilities": {},
+          "Due to Banks": {
+            "2024": "18,949,309",
+            "2023": "321,166,526"
+          },
+          "Derivative Financial Liabilities": {
+            "2024": "22,856,743",
+            "2023": "947,739"
+          },
+          "Financial Liabilities at Amortised Cost - Due to Depositors": {
+            "2024": "154,405,710,056",
+            "2023": "132,937,607,047"
+          },
+          "Other Liabilities - Financial": {
+            "2024": "4,099,974,790",
+            "2023": "3,391,138,093"
+          },
+          "Current Tax Liabilities": {
+            "2024": "473,465,041",
+            "2023": "722,144,473"
+          },
+          "Dividend Payable": {
+            "2024": "99,470,636",
+            "2023": "6,325,683"
+          },
+          "Retirement Benefit Liability": {
+            "2024": "186,730,809",
+            "2023": "130,416,033"
+          },
+          "Other Liabilities - Non Financial": {
+            "2024": "187,790,136",
+            "2023": "245,445,827"
+          },
+          "Total Liabilities": {
+            "2024": "159,494,947,520",
+            "2023": "137,755,191,421"
+          }
+        },
+        "full_text": "240\nAnnual Report 2024\nSTATEMENT OF FINANCIAL POSITION\nNote\n2024\nRs.\n2023\nRs.\nAssets\nCash and Cash Equivalents\n17\n17,070,764,566\n11,100,863,400\nBalance with Central Bank of Sri Lanka\n18\n7,078,039,326\n9,446,862,668\nPlacements with Banks\n19\n38,311,689,750\n42,474,569,846\nPlacements with Licensed Finance Companies\n20\n507,640,396\n80,783\nDerivative Financial Assets\n21\n177,460,850\n194,267,095\nFinancial Assets Recognised through Profit or Loss - Measured at Fair Value\n22\n70,216,929\n8,994,233\nFinancial Assets at Amortised Cost - Financing and Receivables to Other Customers\n23\n111,301,849,020\n89,658,059,768\nFinancial Assets Measured at Fair Value through Other Comprehensive Income\n24\n348,710,504\n319,000,406\nOther Assets - Financial\n25\n2,829,580,181\n2,006,908,679\nProperty, Plant, Equipment and Right-of-Use Assets\n26\n2,968,026,601\n2,775,396,192\nIntangible Assets\n27\n337,562,608\n379,309,190\nOther Assets - Non Financial\n28\n510,950,335\n303,033,651\nDeferred Tax Assets\n29\n824,316,848\n784,429,734\nTotal Assets\n182,336,807,914\n159,451,775,645\nLiabilities\nDue to Banks\n30\n18,949,309\n321,166,526\nDerivative Financial Liabilities\n31\n22,856,743\n947,739\nFinancial Liabilities at Amortised Cost - Due to Depositors\n32\n154,405,710,056\n132,937,607,047\nOther Liabilities - Financial\n33\n4,099,974,790\n3,391,138,093\nCurrent Tax Liabilities\n473,465,041\n722,144,473\nDividend Payable\n99,470,636\n6,325,683\nRetirement Benefit Liability\n34\n186,730,809\n130,416,033\nOther Liabilities - Non Financial\n35\n187,790,136\n245,445,827\nTotal Liabilities\n159,494,947,520\n137,755,191,421"
+      }
+    },
+    "cashflow": {
+      "page_245": {
+        "raw_text_lines": 161,
+        "parsed_items": 56,
+        "data": {
+          "Annual Report 2024": {},
+          "STATEMENT OF CASH FLOWS": {},
+          "Note": {
+            "2024": "2024"
+          },
+          "Rs.": {},
+          "Cash Flow from Operating Activities": {},
+          "Financing Income Received": {
+            "2024": "15,707,102,349",
+            "2023": "17,935,909,395"
+          },
+          "Fee and Commission Received": {
+            "2024": "1,074,221,675",
+            "2023": "932,293,539"
+          },
+          "Financing Expenses Paid": {
+            "2024": "(9,296,579,758)",
+            "2023": "(9,910,639,207)"
+          },
+          "Foreign Exchange Income Received": {
+            "2024": "693,112,850",
+            "2023": "1,765,213,774"
+          },
+          "Gratuity Payments Made": {
+            "2024": "(13,472,750)",
+            "2023": "(18,784,553)"
+          },
+          "Payments to Employees and Suppliers": {
+            "2024": "(5,230,147,153)",
+            "2023": "(4,384,224,212)"
+          },
+          "Operating Profit before Changes in Operating Assets and Liabilities (Note A)": {
+            "2024": "2,934,237,213",
+            "2023": "6,319,768,736"
+          },
+          "(Increase) / Decrease in Operating Assets": {},
+          "Financing and Receivables to Other Customers": {
+            "2024": "(21,933,497,525)",
+            "2023": "(8,583,665,332)"
+          },
+          "Other Financial Assets": {
+            "2024": "(921,644,258)",
+            "2023": "(351,643,742)"
+          },
+          "Other Non Financial Assets": {
+            "2024": "(207,916,684)",
+            "2023": "(128,321,076)"
+          },
+          "Balance with Central Bank of Sri Lanka": {
+            "2024": "2,368,823,342",
+            "2023": "(4,361,183,605)"
+          },
+          "Increase / (Decrease) in Operating Liabilities": {},
+          "Due to Depositors": {
+            "2024": "22,251,557,030",
+            "2023": "19,621,914,385"
+          },
+          "Due to Banks": {
+            "2024": "(302,217,217)",
+            "2023": "(11,535,556,409)"
+          },
+          "Other Liabilities": {
+            "2024": "689,896,255",
+            "2023": "1,501,531,152"
+          },
+          "Net Cash Generated from Operating Activities before Income Tax": {
+            "2024": "4,879,238,156",
+            "2023": "2,482,844,109"
+          },
+          "Income Tax Paid": {
+            "2024": "(1,289,906,511)",
+            "2023": "(1,136,264,701)"
+          },
+          "Net Cash (Used in)/From Operating Activities": {
+            "2024": "3,589,331,645",
+            "2023": "1,346,579,408"
+          },
+          "Cash Flows from in Investing Activities": {},
+          "Acquisition of Property, Plant and Equipment": {
+            "2024": "(257,710,731)",
+            "2023": "(101,650,537)"
+          },
+          "Proceeds from Sale of Property, Plant and Equipment": {
+            "2024": "72,034",
+            "2023": "47,826"
+          },
+          "Acquisition of Intangible Assets": {
+            "2024": "(130,399,413)",
+            "2023": "(118,193,401)"
+          },
+          "Placements with Licensed Finance Companies": {
+            "2024": "(500,002,951)",
+            "2023": "(3,671)"
+          },
+          "Placements with Banks": {
+            "2024": "3,849,994,807",
+            "2023": "(18,610,005,525)"
+          },
+          "Dividend Received from Financial Assets": {
+            "2024": "5,917,689",
+            "2023": "2,934,708"
+          },
+          "Financial Assets Recognised through Profit or Loss - Measured at Fair Value": {
+            "2024": "(19,191,316)",
+            "2023": "65,679,670"
+          },
+          "Net Cash (Used)/From Investing Activities": {
+            "2024": "2,948,680,119",
+            "2023": "(18,761,190,930)"
+          },
+          "Cash Flows from Financing Activities": {},
+          "Rights Issue of Shares": {},
+          "Share Issue Expenses": {},
+          "Dividend Paid": {
+            "2024": "(568,205,943)",
+            "2023": "(26,025)"
+          },
+          "Net Cash (Used in)/From Financing Activities": {
+            "2024": "(568,205,943)",
+            "2023": "5,914,455,329"
+          },
+          "Net Increase / (Decrease) in Cash and Cash Equivalents": {
+            "2024": "5,969,805,821",
+            "2023": "(11,500,156,193)"
+          },
+          "Cash and Cash Equivalents at the Beginning of the Year": {
+            "2024": "11,107,767,402",
+            "2023": "22,607,923,595"
+          },
+          "Cash and Cash Equivalents at the End of the Year": {
+            "2024": "17,077,573,223",
+            "2023": "11,107,767,402"
+          },
+          "Note A": {},
+          "Reconciliation of Operating Profit": {},
+          "Profit Before Tax": {
+            "2024": "2,786,843,324",
+            "2023": "2,312,190,600"
+          },
+          "Depreciation of Property, Plant, Equipment and Right-of-Use Assets": {
+            "2024": "256,903,664",
+            "2023": "249,465,480"
+          },
+          "Amortisation of Intangible Assets": {
+            "2024": "64,936,795",
+            "2023": "58,137,560"
+          },
+          "(Profit)/Loss on Disposal of Equity": {
+            "2024": "(3,046,269)"
+          },
+          "(Profit) / Loss on Disposal of Property, Plant and Equipment": {
+            "2024": "(72,034)",
+            "2023": "(47,826)"
+          },
+          "Impairment on Financial Assets": {
+            "2024": "289,612,927",
+            "2023": "2,120,743,289"
+          },
+          "Provision for Gratuity": {
+            "2024": "33,662,105",
+            "2023": "34,785,369"
+          },
+          "(Increase) / Decrease in Placement Income Receivable": {
+            "2024": "307,540,088",
+            "2023": "697,536,789"
+          },
+          "Increase / (Decrease) in Profit Payable": {
+            "2024": "(783,454,021)",
+            "2023": "769,675,433"
+          },
+          "Other Non Cash Items": {
+            "2024": "39,686,184",
+            "2023": "114,114,109"
+          },
+          "Dividend Income (Net)": {
+            "2024": "(5,917,689)",
+            "2023": "(2,934,708)"
+          },
+          "Gratuity Payments": {
+            "2024": "(13,472,750)",
+            "2023": "(18,784,553)"
+          },
+          "(Profit) / Loss on Mark to Market Valuation": {
+            "2024": "(38,985,111)",
+            "2023": "(15,112,806)"
+          }
+        },
+        "full_text": "243\nAnnual Report 2024\nSTATEMENT OF CASH FLOWS\nNote\n2024\nRs.\n2023\nRs.\nCash Flow from Operating Activities\nFinancing Income Received\n15,707,102,349\n17,935,909,395\nFee and Commission Received\n1,074,221,675\n932,293,539\nFinancing Expenses Paid\n(9,296,579,758)\n(9,910,639,207)\nForeign Exchange Income Received\n693,112,850\n1,765,213,774\nGratuity Payments Made\n34\n(13,472,750)\n(18,784,553)\nPayments to Employees and Suppliers\n(5,230,147,153)\n(4,384,224,212)\nOperating Profit before Changes in Operating Assets and Liabilities (Note A)\n2,934,237,213\n6,319,768,736\n(Increase) / Decrease in Operating Assets\nFinancing and Receivables to Other Customers\n(21,933,497,525)\n(8,583,665,332)\nOther Financial Assets\n(921,644,258)\n(351,643,742)\nOther Non Financial Assets\n(207,916,684)\n(128,321,076)\nBalance with Central Bank of Sri Lanka\n2,368,823,342\n(4,361,183,605)\nIncrease / (Decrease) in Operating Liabilities\nDue to Depositors\n22,251,557,030\n19,621,914,385\nDue to Banks\n(302,217,217)\n(11,535,556,409)\nOther Liabilities\n689,896,255\n1,501,531,152\nNet Cash Generated from Operating Activities before Income Tax\n4,879,238,156\n2,482,844,109\nIncome Tax Paid\n(1,289,906,511)\n(1,136,264,701)\nNet Cash (Used in)/From Operating Activities\n3,589,331,645\n1,346,579,408\nCash Flows from in Investing Activities\nAcquisition of Property, Plant and Equipment\n(257,710,731)\n(101,650,537)\nProceeds from Sale of Property, Plant and Equipment\n72,034\n47,826\nAcquisition of Intangible Assets\n(130,399,413)\n(118,193,401)\nPlacements with Licensed Finance Companies\n(500,002,951)\n(3,671)\nPlacements with Banks\n3,849,994,807\n(18,610,005,525)\nDividend Received from Financial Assets\n5,917,689\n2,934,708\nFinancial Assets Recognised through Profit or Loss - Measured at Fair Value\n(19,191,316)\n65,679,670\nNet Cash (Used)/From Investing Activities\n2,948,680,119\n(18,761,190,930)\nCash Flows from Financing Activities\nRights Issue of Shares\n-\n6,000,677,221\nShare Issue Expenses\n-\n(86,195,867)\nDividend Paid\n(568,205,943)\n(26,025)\nNet Cash (Used in)/From Financing Activities\n(568,205,943)\n5,914,455,329\nNet Increase / (Decrease) in Cash and Cash Equivalents\n5,969,805,821\n(11,500,156,193)\nCash and Cash Equivalents at the Beginning of the Year\n11,107,767,402\n22,607,923,595\nCash and Cash Equivalents at the End of the Year\n17\n17,077,573,223\n11,107,767,402\nNote A\nReconciliation of Operating Profit\nProfit Before Tax\n2,786,843,324\n2,312,190,600\nDepreciation of Property, Plant, Equipment and Right-of-Use Assets\n26\n256,903,664\n249,465,480\nAmortisation of Intangible Assets\n27\n64,936,795\n58,137,560\n(Profit)/Loss on Disposal of Equity\n(3,046,269)\n-\n(Profit) / Loss on Disposal of Property, Plant and Equipment\n10\n(72,034)\n(47,826)\nImpairment on Financial Assets\n11\n289,612,927\n2,120,743,289\nProvision for Gratuity\n34\n33,662,105\n34,785,369\n(Increase) / Decrease in Placement Income Receivable\n307,540,088\n697,536,789\nIncrease / (Decrease) in Profit Payable\n(783,454,021)\n769,675,433\nOther Non Cash Items\n39,686,184\n114,114,109\nDividend Income (Net)\n(5,917,689)\n(2,934,708)\nGratuity Payments\n34\n(13,472,750)\n(18,784,553)\n(Profit) / Loss on Mark to Market Valuation\n(38,985,111)\n(15,112,806)\n2,934,237,213\n6,319,768,736\nThe Accounting Policies and Notes on pages 244 through 313 form an integral part of the Financial Statements."
+      }
+    }
+  }
+}

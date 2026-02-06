@@ -7,7 +7,7 @@ class Settings(BaseSettings):
 
     APP_NAME: str = "Stock Platform Backend"
     ENV: str = "dev"
-    DATABASE_URL: str = ""
+    DATABASE_URL: str = "sqlite:///./sql_app.db"
 
 
 

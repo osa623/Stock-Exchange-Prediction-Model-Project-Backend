@@ -1,28 +1,161 @@
-from fastapi import APIRouter, Depends
+"""
+User router – all endpoints require authentication.
+
+firebase_uid is ALWAYS derived from the verified token via ``get_current_uid``.
+It is never accepted from the request body.
+"""
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from db.session import get_db
 from app.middleware.firebase_auth import get_current_uid
-from modules.users.service import get_or_create_user
-from app.schemas.users import UpsertProfileRequest, UserResponse
+from app.schemas.users import (
+    ProfileUpdateRequest,
+    OnboardingUpdateRequest,
+    PinSetRequest,
+    PinVerifyRequest,
+    RegisterRequest,
+    UserMeResponse,
+    OnboardingResponse,
+    SubscriptionStatusEnum,
+)
+from modules.users.service import (
+    get_or_create_user,
+    update_profile,
+    update_onboarding,
+    set_or_change_pin,
+    check_pin,
+)
+from modules.users.repository import get_user_by_firebase_uid
 
 router = APIRouter()
 
-@router.get("/me", response_model=UserResponse)
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _build_me_response(user) -> UserMeResponse:
+    """Map a User ORM instance to the safe response schema."""
+    sub_status = SubscriptionStatusEnum.free
+    if user.subscription is not None:
+        sub_status = SubscriptionStatusEnum(user.subscription.status.value)
+
+    onboarding = None
+    if user.onboarding is not None:
+        onboarding = OnboardingResponse.model_validate(user.onboarding)
+
+    return UserMeResponse(
+        firebase_uid=user.firebase_uid,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        username=user.username,
+        email=user.email,
+        phone_number=user.phone_number,
+        avatar_url=user.avatar_url,
+        pin_is_set=user.pin_hash is not None,
+        subscription_status=sub_status,
+        onboarding=onboarding,
+        created_at=user.created_at,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
+
+@router.get("/me", response_model=UserMeResponse)
 def get_me(
     db: Session = Depends(get_db),
     uid: str = Depends(get_current_uid),
 ):
-    user = get_or_create_user(db, uid)
-    status = user.subscription.status if user.subscription else "free"
-    return UserResponse(firebase_uid=user.firebase_uid, email=user.email, subscription_status=status)
+    """Return current user profile. 404 if user has not registered yet."""
+    user = get_user_by_firebase_uid(db, uid)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not registered. POST /users/me/register first.",
+        )
+    return _build_me_response(user)
 
-@router.post("/me", response_model=UserResponse)
-def upsert_me(
-    body: UpsertProfileRequest,
+
+@router.post("/me/register", response_model=UserMeResponse, status_code=status.HTTP_201_CREATED)
+def register_me(
+    body: RegisterRequest,
     db: Session = Depends(get_db),
     uid: str = Depends(get_current_uid),
 ):
-    user = get_or_create_user(db, uid, email=body.email)
-    status = user.subscription.status if user.subscription else "free"
-    return UserResponse(firebase_uid=user.firebase_uid, email=user.email, subscription_status=status)
+    """First-time registration – creates User + Subscription + Onboarding rows."""
+    user = get_or_create_user(
+        db,
+        uid,
+        first_name=body.first_name,
+        last_name=body.last_name,
+        username=body.username,
+        email=body.email,
+        phone_number=body.phone_number,
+    )
+    return _build_me_response(user)
+
+
+@router.patch("/me", response_model=UserMeResponse)
+def patch_me(
+    body: ProfileUpdateRequest,
+    db: Session = Depends(get_db),
+    uid: str = Depends(get_current_uid),
+):
+    """Partial update of profile fields."""
+    user = update_profile(
+        db,
+        uid,
+        first_name=body.first_name,
+        last_name=body.last_name,
+        username=body.username,
+        phone_number=body.phone_number,
+        avatar_url=body.avatar_url,
+    )
+    return _build_me_response(user)
+
+
+@router.put("/me/onboarding", response_model=UserMeResponse)
+def put_onboarding(
+    body: OnboardingUpdateRequest,
+    db: Session = Depends(get_db),
+    uid: str = Depends(get_current_uid),
+):
+    """Set or replace onboarding data."""
+    user = update_onboarding(
+        db,
+        uid,
+        experience_level=body.experience_level.value,
+        primary_goal=body.primary_goal.value,
+        investor_type=body.investor_type.value if body.investor_type else None,
+        portfolio_size=body.portfolio_size.value if body.portfolio_size else None,
+    )
+    return _build_me_response(user)
+
+
+@router.put("/me/pin", status_code=status.HTTP_204_NO_CONTENT)
+def put_pin(
+    body: PinSetRequest,
+    db: Session = Depends(get_db),
+    uid: str = Depends(get_current_uid),
+):
+    """Set or change the user's 4-digit PIN."""
+    set_or_change_pin(db, uid, body.pin)
+    return None
+
+
+@router.post("/me/pin/verify")
+def verify_pin_endpoint(
+    body: PinVerifyRequest,
+    db: Session = Depends(get_db),
+    uid: str = Depends(get_current_uid),
+):
+    """
+    Verify the user's PIN.
+    Returns 200 on success, 401 on mismatch, 429 when locked.
+    """
+    check_pin(db, uid, body.pin)
+    return {"verified": True}

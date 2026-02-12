@@ -31,8 +31,13 @@ async def lifespan(app: FastAPI):
         "env": settings.ENV,
         "debug": settings.DEBUG
     })
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created/verified")
+
+    # Only auto-create tables in development (use Alembic migrations in prod)
+    if settings.ENV in ("dev", "development", "test"):
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created/verified (dev mode)")
+    else:
+        logger.info("Skipping auto table creation (production mode)")
     
     yield
     

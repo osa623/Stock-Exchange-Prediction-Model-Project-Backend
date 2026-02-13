@@ -1,9 +1,10 @@
 import enum
 from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     String, Integer, DateTime, ForeignKey, JSON, Text, Index, func,
-    Enum as SAEnum,
+    Enum as SAEnum, Numeric, UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from db.session import Base
@@ -158,3 +159,134 @@ class Job(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+# ---------------------------------------------------------------------------
+# Portfolio enums
+# ---------------------------------------------------------------------------
+
+class PortfolioSourceType(str, enum.Enum):
+    manual = "manual"
+    excel = "excel"
+    mixed = "mixed"
+
+
+class ImportStatus(str, enum.Enum):
+    received = "received"
+    parsed = "parsed"
+    failed = "failed"
+
+
+# ---------------------------------------------------------------------------
+# Portfolio model
+# ---------------------------------------------------------------------------
+
+class Portfolio(Base):
+    __tablename__ = "portfolios"
+    __table_args__ = (
+        Index("ix_portfolios_user_id", "user_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    base_currency: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    source_type: Mapped[PortfolioSourceType] = mapped_column(
+        SAEnum(PortfolioSourceType, name="portfolio_source_type", create_constraint=True, native_enum=False, length=10),
+        default=PortfolioSourceType.manual,
+        server_default="manual",
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relationships
+    positions: Mapped[list["PortfolioPosition"]] = relationship(
+        "PortfolioPosition", back_populates="portfolio", cascade="all, delete-orphan", lazy="selectin",
+    )
+    imports: Mapped[list["PortfolioImport"]] = relationship(
+        "PortfolioImport", back_populates="portfolio", cascade="all, delete-orphan", lazy="selectin",
+    )
+
+
+# ---------------------------------------------------------------------------
+# PortfolioPosition model
+# ---------------------------------------------------------------------------
+
+class PortfolioPosition(Base):
+    __tablename__ = "portfolio_positions"
+    __table_args__ = (
+        UniqueConstraint("portfolio_id", "symbol", name="uq_portfolio_position_symbol"),
+        Index("ix_portfolio_positions_portfolio_id", "portfolio_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    portfolio_id: Mapped[int] = mapped_column(ForeignKey("portfolios.id", ondelete="CASCADE"), nullable=False)
+
+    symbol: Mapped[str] = mapped_column(String(15), nullable=False)
+    qty: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    avg_price: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    total_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    bes: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    currency: Mapped[str | None] = mapped_column(String(10), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    portfolio: Mapped["Portfolio"] = relationship("Portfolio", back_populates="positions")
+
+
+# ---------------------------------------------------------------------------
+# PortfolioImport model
+# ---------------------------------------------------------------------------
+
+class PortfolioImport(Base):
+    __tablename__ = "portfolio_imports"
+    __table_args__ = (
+        Index("ix_portfolio_imports_portfolio_id", "portfolio_id"),
+        Index("ix_portfolio_imports_user_id", "user_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    portfolio_id: Mapped[int] = mapped_column(ForeignKey("portfolios.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    file_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    status: Mapped[ImportStatus] = mapped_column(
+        SAEnum(ImportStatus, name="import_status", create_constraint=True, native_enum=False, length=10),
+        default=ImportStatus.received,
+        server_default="received",
+        nullable=False,
+    )
+    rows_total: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    rows_parsed: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    rows_failed: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    error_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    portfolio: Mapped["Portfolio"] = relationship("Portfolio", back_populates="imports")
+
+
+# ---------------------------------------------------------------------------
+# WatchlistItem model
+# ---------------------------------------------------------------------------
+
+class WatchlistItem(Base):
+    __tablename__ = "watchlist_items"
+    __table_args__ = (
+        UniqueConstraint("user_id", "symbol", name="uq_watchlist_user_symbol"),
+        Index("ix_watchlist_items_user_id", "user_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    symbol: Mapped[str] = mapped_column(String(15), nullable=False)
+    display_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

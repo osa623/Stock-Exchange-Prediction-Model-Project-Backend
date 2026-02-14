@@ -69,6 +69,7 @@ class User(Base):
     pin_failed_attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
     pin_locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     pin_set_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    pin_lockout_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -80,6 +81,10 @@ class User(Base):
     )
     onboarding: Mapped["UserOnboarding"] = relationship(
         "UserOnboarding", uselist=False, back_populates="user", cascade="all, delete-orphan",
+    )
+    security_events: Mapped[list["SecurityEvent"]] = relationship(
+        "SecurityEvent", back_populates="user", cascade="all, delete-orphan",
+        order_by="SecurityEvent.created_at.desc()", lazy="dynamic",
     )
 
 
@@ -290,3 +295,39 @@ class WatchlistItem(Base):
     display_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+# ---------------------------------------------------------------------------
+# SecurityEvent model
+# ---------------------------------------------------------------------------
+
+class SecurityEventType(str, enum.Enum):
+    pin_set = "pin_set"
+    pin_changed = "pin_changed"
+    pin_verify_success = "pin_verify_success"
+    pin_verify_failed = "pin_verify_failed"
+    pin_locked = "pin_locked"
+    pin_lockout_expired = "pin_lockout_expired"
+    pin_rate_limited = "pin_rate_limited"
+
+
+class SecurityEvent(Base):
+    __tablename__ = "security_events"
+    __table_args__ = (
+        Index("ix_security_events_user_id", "user_id"),
+        Index("ix_security_events_created_at", "created_at"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    event_type: Mapped[SecurityEventType] = mapped_column(
+        SAEnum(SecurityEventType, name="security_event_type", create_constraint=True, native_enum=False, length=30),
+        nullable=False,
+    )
+    ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
+    detail: Mapped[str | None] = mapped_column(String(512), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user: Mapped["User"] = relationship("User", back_populates="security_events")

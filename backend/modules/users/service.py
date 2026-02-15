@@ -20,6 +20,7 @@ from db.models import (
     PrimaryGoal,
     InvestorType,
     PortfolioSize,
+    SecurityEventType,
 )
 from modules.users.repository import (
     get_user_by_firebase_uid,
@@ -31,6 +32,10 @@ from modules.users.repository import (
     increment_pin_failed_attempts,
     lock_pin,
     reset_pin_lockout,
+    increment_lockout_count,
+    reset_lockout_count,
+    create_security_event,
+    list_security_events as repo_list_security_events,
 )
 
 logger = get_logger(__name__)
@@ -39,7 +44,10 @@ logger = get_logger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 MAX_PIN_ATTEMPTS = 5
-PIN_LOCKOUT_MINUTES = 10
+
+# Exponential backoff lockout durations (minutes) indexed by lockout_count
+# Lockout 1: 1 min, 2: 5 min, 3: 15 min, 4: 60 min, 5+: 24 hours
+_LOCKOUT_MINUTES = [1, 5, 15, 60, 1440]
 
 _USERNAME_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{2,39}$")
 
@@ -175,20 +183,50 @@ def update_onboarding(
     return user
 
 
-def set_or_change_pin(db: Session, firebase_uid: str, pin: str) -> None:
-    """Hash and store a new 4-digit PIN. Resets lockout state."""
+def _lockout_minutes(lockout_count: int) -> int:
+    """Return escalating lockout duration based on how many times user was locked."""
+    idx = min(lockout_count, len(_LOCKOUT_MINUTES)) - 1
+    return _LOCKOUT_MINUTES[max(idx, 0)]
+
+
+def set_or_change_pin(
+    db: Session,
+    firebase_uid: str,
+    pin: str,
+    ip_address: str | None = None,
+) -> None:
+    """Hash and store a new 6-digit PIN. Resets lockout state."""
     user = get_user_by_firebase_uid(db, firebase_uid)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
 
+    event_type = (
+        SecurityEventType.pin_changed if user.pin_hash is not None
+        else SecurityEventType.pin_set
+    )
+
     hashed = hash_pin(pin)  # raises ValueError for invalid format
     repo_set_pin_hash(db, user, hashed)
+    # Reset escalation on new PIN
+    reset_lockout_count(db, user)
+
+    create_security_event(db, user, event_type, ip_address=ip_address, detail="PIN set/changed successfully.")
     logger.info("PIN set/changed", extra={"firebase_uid": firebase_uid, "event": "pin_changed"})
 
 
-def check_pin(db: Session, firebase_uid: str, pin: str) -> bool:
+def check_pin(
+    db: Session,
+    firebase_uid: str,
+    pin: str,
+    ip_address: str | None = None,
+) -> bool:
     """
     Verify *pin* against the stored hash with brute-force protection.
+
+    Security features:
+    - Exponential backoff lockout (1 min → 5 min → 15 min → 1 hr → 24 hr)
+    - Automatic counter reset when lockout period expires
+    - Security event logging for audit trail
 
     Returns True on success.
     Raises HTTPException on lockout, missing PIN, or incorrect PIN.
@@ -203,38 +241,95 @@ def check_pin(db: Session, firebase_uid: str, pin: str) -> bool:
             detail="PIN has not been set.",
         )
 
-    # Check lockout
     now = datetime.now(timezone.utc)
-    if user.pin_locked_until is not None and now < user.pin_locked_until:
-        remaining = int((user.pin_locked_until - now).total_seconds())
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"PIN is locked. Try again in {remaining} seconds.",
-        )
 
-    # Verify
-    if verify_pin(pin, user.pin_hash):
-        # Successful – clear any prior failed attempts
-        if user.pin_failed_attempts > 0:
+    # ── Lockout check ─────────────────────────────────────────────────────
+    if user.pin_locked_until is not None:
+        if now < user.pin_locked_until:
+            remaining = int((user.pin_locked_until - now).total_seconds())
+            create_security_event(
+                db, user, SecurityEventType.pin_verify_failed,
+                ip_address=ip_address,
+                detail=f"Attempt while locked. {remaining}s remaining.",
+            )
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"PIN is locked. Try again in {remaining} seconds.",
+            )
+        else:
+            # Lockout has expired – reset failed attempts so user gets
+            # a fresh set of MAX_PIN_ATTEMPTS, but keep lockout_count
+            # so the NEXT lockout escalates further.
             reset_pin_lockout(db, user)
+            create_security_event(
+                db, user, SecurityEventType.pin_lockout_expired,
+                ip_address=ip_address,
+                detail="Lockout expired. Failed attempts reset.",
+            )
+            logger.info(
+                "PIN lockout expired, attempts reset",
+                extra={"firebase_uid": firebase_uid, "event": "pin_lockout_expired"},
+            )
+
+    # ── Verify ────────────────────────────────────────────────────────────
+    if verify_pin(pin, user.pin_hash):
+        # Successful – clear ALL lockout state including escalation counter
+        if user.pin_failed_attempts > 0 or user.pin_lockout_count > 0:
+            reset_lockout_count(db, user)
+        create_security_event(
+            db, user, SecurityEventType.pin_verify_success,
+            ip_address=ip_address,
+            detail="PIN verified successfully.",
+        )
         return True
 
-    # Failed attempt
+    # ── Failed attempt ────────────────────────────────────────────────────
     attempts = increment_pin_failed_attempts(db, user)
+
     if attempts >= MAX_PIN_ATTEMPTS:
-        lock_until = now + timedelta(minutes=PIN_LOCKOUT_MINUTES)
+        lockout_num = increment_lockout_count(db, user)
+        lockout_mins = _lockout_minutes(lockout_num)
+        lock_until = now + timedelta(minutes=lockout_mins)
         lock_pin(db, user, lock_until)
+
+        create_security_event(
+            db, user, SecurityEventType.pin_locked,
+            ip_address=ip_address,
+            detail=f"Locked for {lockout_mins} min (lockout #{lockout_num}).",
+        )
         logger.warning(
-            "PIN locked due to too many failed attempts",
-            extra={"firebase_uid": firebase_uid, "event": "pin_locked"},
+            "PIN locked – exponential backoff",
+            extra={
+                "firebase_uid": firebase_uid,
+                "lockout_count": lockout_num,
+                "lockout_minutes": lockout_mins,
+                "event": "pin_locked",
+            },
         )
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Too many failed attempts. PIN is locked for {PIN_LOCKOUT_MINUTES} minutes.",
+            detail=f"Too many failed attempts. PIN is locked for {lockout_mins} minute(s).",
         )
 
     remaining_attempts = MAX_PIN_ATTEMPTS - attempts
+    create_security_event(
+        db, user, SecurityEventType.pin_verify_failed,
+        ip_address=ip_address,
+        detail=f"Incorrect PIN. {remaining_attempts} attempt(s) remaining.",
+    )
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail=f"Incorrect PIN. {remaining_attempts} attempt(s) remaining.",
     )
+
+
+def get_security_events(
+    db: Session,
+    firebase_uid: str,
+    limit: int = 50,
+) -> list:
+    """Return the most recent security events for the authenticated user."""
+    user = get_user_by_firebase_uid(db, firebase_uid)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+    return repo_list_security_events(db, user, limit=limit)

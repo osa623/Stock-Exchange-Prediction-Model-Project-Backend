@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     
     # Firebase Authentication
     FIREBASE_PROJECT_ID: str = ""
+    GOOGLE_APPLICATION_CREDENTIALS: str = ""
     
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60

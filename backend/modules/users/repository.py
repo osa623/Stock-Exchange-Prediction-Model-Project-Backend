@@ -17,6 +17,8 @@ from db.models import (
     PrimaryGoal,
     InvestorType,
     PortfolioSize,
+    SecurityEvent,
+    SecurityEventType,
 )
 
 
@@ -189,3 +191,63 @@ def reset_pin_lockout(db: Session, user: User) -> None:
     user.pin_locked_until = None
     db.add(user)
     db.commit()
+
+
+def increment_lockout_count(db: Session, user: User) -> int:
+    """Increment the consecutive-lockout counter and return the new value."""
+    user.pin_lockout_count = (user.pin_lockout_count or 0) + 1
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user.pin_lockout_count
+
+
+def reset_lockout_count(db: Session, user: User) -> None:
+    """Reset consecutive-lockout counter after successful verification."""
+    user.pin_lockout_count = 0
+    user.pin_failed_attempts = 0
+    user.pin_locked_until = None
+    db.add(user)
+    db.commit()
+
+
+# ---------------------------------------------------------------------------
+# Security events
+# ---------------------------------------------------------------------------
+
+def create_security_event(
+    db: Session,
+    user: User,
+    event_type: SecurityEventType,
+    ip_address: str | None = None,
+    detail: str | None = None,
+) -> SecurityEvent:
+    """Record a security event for the given user."""
+    event = SecurityEvent(
+        user_id=user.id,
+        event_type=event_type,
+        ip_address=ip_address,
+        detail=detail,
+    )
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+    return event
+
+
+def list_security_events(
+    db: Session,
+    user: User,
+    limit: int = 50,
+) -> list[SecurityEvent]:
+    """Return the most recent security events for a user."""
+    return (
+        db.execute(
+            select(SecurityEvent)
+            .where(SecurityEvent.user_id == user.id)
+            .order_by(SecurityEvent.created_at.desc())
+            .limit(limit)
+        )
+        .scalars()
+        .all()
+    )

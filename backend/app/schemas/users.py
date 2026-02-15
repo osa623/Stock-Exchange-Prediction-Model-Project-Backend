@@ -67,24 +67,24 @@ class OnboardingUpdateRequest(BaseModel):
 
 
 class PinSetRequest(BaseModel):
-    pin: str = Field(..., min_length=4, max_length=4)
+    pin: str = Field(..., min_length=6, max_length=6)
 
     @field_validator("pin")
     @classmethod
     def pin_must_be_digits(cls, v: str) -> str:
         if not v.isdigit():
-            raise ValueError("PIN must be exactly 4 digits")
+            raise ValueError("PIN must be exactly 6 digits")
         return v
 
 
 class PinVerifyRequest(BaseModel):
-    pin: str = Field(..., min_length=4, max_length=4)
+    pin: str = Field(..., min_length=6, max_length=6)
 
     @field_validator("pin")
     @classmethod
     def pin_must_be_digits(cls, v: str) -> str:
         if not v.isdigit():
-            raise ValueError("PIN must be exactly 4 digits")
+            raise ValueError("PIN must be exactly 6 digits")
         return v
 
 
@@ -123,6 +123,30 @@ class UserMeResponse(BaseModel):
     subscription_status: SubscriptionStatusEnum
 
     onboarding: Optional[OnboardingResponse] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ---------------------------------------------------------------------------
+# Security event schemas
+# ---------------------------------------------------------------------------
+
+class SecurityEventTypeEnum(str, Enum):
+    pin_set = "pin_set"
+    pin_changed = "pin_changed"
+    pin_verify_success = "pin_verify_success"
+    pin_verify_failed = "pin_verify_failed"
+    pin_locked = "pin_locked"
+    pin_lockout_expired = "pin_lockout_expired"
+    pin_rate_limited = "pin_rate_limited"
+
+
+class SecurityEventResponse(BaseModel):
+    id: int
+    event_type: SecurityEventTypeEnum
+    ip_address: Optional[str] = None
+    detail: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

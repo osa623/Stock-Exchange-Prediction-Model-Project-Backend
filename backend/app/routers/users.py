@@ -5,11 +5,12 @@ firebase_uid is ALWAYS derived from the verified token via ``get_current_uid``.
 It is never accepted from the request body.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from db.session import get_db
 from app.middleware.firebase_auth import get_current_uid
+from app.middleware.rate_limit import pin_rate_limiter
 from app.schemas.users import (
     ProfileUpdateRequest,
     OnboardingUpdateRequest,
@@ -18,6 +19,7 @@ from app.schemas.users import (
     RegisterRequest,
     UserMeResponse,
     OnboardingResponse,
+    SecurityEventResponse,
     SubscriptionStatusEnum,
 )
 from modules.users.service import (
@@ -26,15 +28,59 @@ from modules.users.service import (
     update_onboarding,
     set_or_change_pin,
     check_pin,
+    get_security_events,
 )
 from modules.users.repository import get_user_by_firebase_uid
+from common.logging import get_logger
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _get_client_ip(request: Request) -> str:
+    """Extract client IP from request, considering proxy headers."""
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip
+    if request.client:
+        return request.client.host
+    return "unknown"
+
+
+async def _enforce_pin_rate_limit(request: Request, db: Session, uid: str) -> None:
+    """
+    Enforce per-IP rate limiting specifically for PIN endpoints.
+    Records a security event if rate-limited.
+    """
+    client_ip = _get_client_ip(request)
+    is_allowed, _ = await pin_rate_limiter.is_allowed(client_ip)
+    if not is_allowed:
+        # Record the rate-limit event if we can find the user
+        from modules.users.repository import create_security_event, get_user_by_firebase_uid as _get_user
+        from db.models import SecurityEventType
+        user = _get_user(db, uid)
+        if user is not None:
+            create_security_event(
+                db, user, SecurityEventType.pin_rate_limited,
+                ip_address=client_ip,
+                detail="PIN endpoint rate limit exceeded.",
+            )
+        logger.warning(
+            "PIN rate limit exceeded",
+            extra={"client_ip": client_ip, "firebase_uid": uid, "event": "pin_rate_limited"},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many PIN requests. Please wait before trying again.",
+            headers={"Retry-After": "300"},
+        )
 
 def _build_me_response(user) -> UserMeResponse:
     """Map a User ORM instance to the safe response schema."""
@@ -137,25 +183,40 @@ def put_onboarding(
 
 
 @router.put("/me/pin", status_code=status.HTTP_204_NO_CONTENT)
-def put_pin(
+async def put_pin(
+    request: Request,
     body: PinSetRequest,
     db: Session = Depends(get_db),
     uid: str = Depends(get_current_uid),
 ):
-    """Set or change the user's 4-digit PIN."""
-    set_or_change_pin(db, uid, body.pin)
+    """Set or change the user's 6-digit PIN (rate-limited per IP)."""
+    await _enforce_pin_rate_limit(request, db, uid)
+    client_ip = _get_client_ip(request)
+    set_or_change_pin(db, uid, body.pin, ip_address=client_ip)
     return None
 
 
 @router.post("/me/pin/verify")
-def verify_pin_endpoint(
+async def verify_pin_endpoint(
+    request: Request,
     body: PinVerifyRequest,
     db: Session = Depends(get_db),
     uid: str = Depends(get_current_uid),
 ):
     """
-    Verify the user's PIN.
-    Returns 200 on success, 401 on mismatch, 429 when locked.
+    Verify the user's PIN (rate-limited per IP).
+    Returns 200 on success, 401 on mismatch, 429 when locked or rate-limited.
     """
-    check_pin(db, uid, body.pin)
+    await _enforce_pin_rate_limit(request, db, uid)
+    client_ip = _get_client_ip(request)
+    check_pin(db, uid, body.pin, ip_address=client_ip)
     return {"verified": True}
+
+
+@router.get("/me/security-events", response_model=list[SecurityEventResponse])
+def get_my_security_events(
+    db: Session = Depends(get_db),
+    uid: str = Depends(get_current_uid),
+):
+    """Return the most recent security events for the authenticated user."""
+    return get_security_events(db, uid)

@@ -39,24 +39,35 @@ async def get_current_uid(
         
         # Initialize Firebase Admin SDK if not already done
         if not firebase_admin._apps:
-            if settings.FIREBASE_PROJECT_ID:
-                # Use Application Default Credentials (for production)
-                # Requires GOOGLE_APPLICATION_CREDENTIALS env var
-                try:
-                    cred = fb_credentials.ApplicationDefault()
-                    initialize_app(cred, {
-                        'projectId': settings.FIREBASE_PROJECT_ID
-                    })
-                    logger.info("Firebase Admin SDK initialized with project credentials")
-                except Exception as init_error:
-                    logger.warning(f"Firebase init with ADC failed: {init_error}, using project ID only")
-                    initialize_app(options={'projectId': settings.FIREBASE_PROJECT_ID})
-            else:
-                # Development mode: no Firebase project configured
+            if not settings.FIREBASE_PROJECT_ID:
                 logger.warning("FIREBASE_PROJECT_ID not set - authentication disabled in dev mode")
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     detail="Authentication service not configured"
+                )
+
+            cred_path = settings.GOOGLE_APPLICATION_CREDENTIALS
+            try:
+                if cred_path:
+                    # Use explicit service account JSON file
+                    import os
+                    if not os.path.isabs(cred_path):
+                        cred_path = os.path.join(
+                            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                            cred_path,
+                        )
+                    cred = fb_credentials.Certificate(cred_path)
+                else:
+                    # Fall back to Application Default Credentials
+                    cred = fb_credentials.ApplicationDefault()
+
+                initialize_app(cred, {'projectId': settings.FIREBASE_PROJECT_ID})
+                logger.info("Firebase Admin SDK initialized successfully")
+            except Exception as init_error:
+                logger.error(f"Firebase initialization failed: {init_error}")
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Authentication service failed to initialize"
                 )
         
         # Verify the ID token

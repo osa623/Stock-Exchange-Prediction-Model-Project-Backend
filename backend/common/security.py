@@ -1,25 +1,25 @@
 """
 PIN Security Utilities
 
-Provides bcrypt-based hashing and verification for 4-digit PINs,
+Provides bcrypt-based hashing and verification for 6-digit PINs,
 with strict input validation.
 """
 
 import re
 import bcrypt
 
-_PIN_PATTERN = re.compile(r"^\d{4}$")
+_PIN_PATTERN = re.compile(r"^\d{6}$")
 
 
 def _validate_pin(pin: str) -> None:
-    """Raise ValueError if *pin* is not exactly 4 digits."""
+    """Raise ValueError if *pin* is not exactly 6 digits."""
     if not isinstance(pin, str) or not _PIN_PATTERN.match(pin):
-        raise ValueError("PIN must be exactly 4 digits")
+        raise ValueError("PIN must be exactly 6 digits")
 
 
 def hash_pin(pin: str) -> str:
     """
-    Hash a 4-digit PIN using bcrypt.
+    Hash a 6-digit PIN using bcrypt.
 
     Returns the bcrypt hash string (UTF-8).
     Raises ValueError for invalid PINs.

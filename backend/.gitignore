@@ -11,6 +11,10 @@ __pycache__/
 # Environment Variables
 .env
 .env.*
+/security*
+
+serviceAccountKey.json
+*.json
 
 # Database
 *.db

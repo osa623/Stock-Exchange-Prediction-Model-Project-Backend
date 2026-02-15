@@ -81,6 +81,13 @@ rate_limiter = RateLimiter(
     window_seconds=60
 )
 
+# PIN-specific rate limiter: 5 attempts per 5 minutes per IP
+# Much stricter than the general limiter to prevent brute-force attacks
+pin_rate_limiter = RateLimiter(
+    max_requests=5,
+    window_seconds=300,
+)
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """

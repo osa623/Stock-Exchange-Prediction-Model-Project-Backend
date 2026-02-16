@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { Shield, LogIn, AlertCircle } from "lucide-react";
 
@@ -99,8 +99,14 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-gray-600">
-          Only authorized administrators can access this panel.
+        <p className="mt-6 text-center text-sm text-gray-500">
+          First time?{" "}
+          <Link
+            to="/register"
+            className="text-cyan-400 hover:text-cyan-300"
+          >
+            Register as admin
+          </Link>
         </p>
       </div>
     </div>

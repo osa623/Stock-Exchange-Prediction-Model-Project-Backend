@@ -125,4 +125,73 @@ export const adminApi = {
     api.delete(`/admin/portfolios/${portfolioId}`),
 };
 
+// ── Admin Auth / Registration ───────────────────────────────────────────
+
+export interface AdminProfile {
+  id: number;
+  firebase_uid: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number: string | null;
+  avatar_url: string | null;
+  role: "super_admin" | "admin";
+  is_active: boolean;
+  invited_by_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RegistrationStatus {
+  registration_open: boolean;
+  admin_count: number;
+}
+
+export const adminAuthApi = {
+  /** Check if self-registration is open (0 admins exist) */
+  getRegistrationStatus: () =>
+    api.get<RegistrationStatus>("/admin/auth/status"),
+
+  /** Self-register as first admin (super_admin) */
+  register: (data: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone_number?: string;
+  }) => api.post<AdminProfile>("/admin/auth/register", data),
+
+  /** Get current admin profile */
+  getMe: () => api.get<AdminProfile>("/admin/auth/me"),
+
+  /** Update current admin profile */
+  updateMe: (data: {
+    first_name?: string;
+    last_name?: string;
+    phone_number?: string;
+    avatar_url?: string;
+  }) => api.patch<AdminProfile>("/admin/auth/me", data),
+
+  /** List all admins */
+  listAdmins: () =>
+    api.get<{ admins: AdminProfile[]; total: number }>("/admin/auth/admins"),
+
+  /** Invite a new admin */
+  invite: (data: {
+    firebase_uid: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone_number?: string;
+    role?: "admin" | "super_admin";
+  }) => api.post<AdminProfile>("/admin/auth/invite", data),
+
+  /** Deactivate an admin */
+  deactivateAdmin: (adminId: number) =>
+    api.patch(`/admin/auth/admins/${adminId}/deactivate`),
+
+  /** Delete an admin */
+  deleteAdmin: (adminId: number) =>
+    api.delete(`/admin/auth/admins/${adminId}`),
+};
+
 export default api;

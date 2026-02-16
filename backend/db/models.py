@@ -331,3 +331,49 @@ class SecurityEvent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="security_events")
+
+
+# ---------------------------------------------------------------------------
+# Admin Role enum
+# ---------------------------------------------------------------------------
+
+class AdminRole(str, enum.Enum):
+    super_admin = "super_admin"
+    admin = "admin"
+
+
+# ---------------------------------------------------------------------------
+# Admin model
+# ---------------------------------------------------------------------------
+
+class Admin(Base):
+    __tablename__ = "admins"
+    __table_args__ = (
+        Index("ix_admins_email", "email", unique=True),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    firebase_uid: Mapped[str] = mapped_column(String(128), unique=True, index=True, nullable=False)
+
+    first_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    email: Mapped[str] = mapped_column(String(256), unique=True, nullable=False)
+    phone_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+
+    role: Mapped[AdminRole] = mapped_column(
+        SAEnum(AdminRole, name="admin_role", create_constraint=True, native_enum=False, length=20),
+        default=AdminRole.admin,
+        server_default="admin",
+        nullable=False,
+    )
+    is_active: Mapped[bool] = mapped_column(Integer, default=1, server_default="1", nullable=False)
+
+    # Who invited this admin (null for the first super_admin)
+    invited_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("admins.id", ondelete="SET NULL"), nullable=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+

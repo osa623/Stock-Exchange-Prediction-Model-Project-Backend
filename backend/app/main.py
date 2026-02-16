@@ -17,7 +17,7 @@ from db import models
 from common.config import settings
 from common.logging import get_logger
 from app.middleware.rate_limit import RateLimitMiddleware
-from app.routers import auth, users, billing, analysis, portfolio, watchlist, admin
+from app.routers import auth, users, billing, analysis, portfolio, watchlist, admin, admin_auth
 
 logger = get_logger(__name__)
 
@@ -270,3 +270,4 @@ app.include_router(analysis.router, prefix="/analysis", tags=["analysis"])
 app.include_router(portfolio.router, prefix="/portfolio", tags=["portfolio"])
 app.include_router(watchlist.router, prefix="/watchlist", tags=["watchlist"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
+app.include_router(admin_auth.router, prefix="/admin/auth", tags=["admin-auth"])

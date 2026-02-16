@@ -30,5 +30,8 @@ class Settings(BaseSettings):
     # Secret Key (for any future JWT/session needs)
     SECRET_KEY: str = "change-this-in-production"
 
+    # Admin – comma-separated Firebase UIDs
+    ADMIN_UIDS: str = ""
+
 
 settings = Settings()  

@@ -40,8 +40,17 @@ export default function UsersPage() {
       setUsers(res.data.users);
       setTotal(res.data.total);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Failed to load users";
-      setError(msg);
+      if (e && typeof e === "object" && "response" in e) {
+        const resp = (e as { response?: { data?: { detail?: string }; status?: number } }).response;
+        if (resp?.status === 403) {
+          setError("Admin access required. Please register as admin first.");
+        } else {
+          setError(resp?.data?.detail || "Failed to load users");
+        }
+      } else {
+        const msg = e instanceof Error ? e.message : "Failed to load users";
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }

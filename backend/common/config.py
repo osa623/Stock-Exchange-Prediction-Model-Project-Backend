@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./sql_app.db"
     
     # Security - CORS
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"]
     
     # Firebase Authentication
     FIREBASE_PROJECT_ID: str = ""

@@ -69,7 +69,7 @@ def create_admin(
         avatar_url=avatar_url,
         role=role,
         invited_by_id=invited_by_id,
-        is_active=True,
+        is_active=1,
     )
     db.add(admin)
     db.commit()
@@ -104,7 +104,7 @@ def update_admin_profile(
 
 
 def deactivate_admin(db: Session, admin: Admin) -> Admin:
-    admin.is_active = False
+    admin.is_active = 0
     db.commit()
     db.refresh(admin)
     return admin

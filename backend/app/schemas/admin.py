@@ -8,7 +8,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, List
 
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, field_validator
 
 
 # ---------------------------------------------------------------------------
@@ -64,6 +64,11 @@ class AdminResponse(BaseModel):
     invited_by_id: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+    @field_validator("is_active", mode="before")
+    @classmethod
+    def coerce_is_active(cls, v):
+        return bool(v)
 
     class Config:
         from_attributes = True

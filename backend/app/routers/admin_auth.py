@@ -102,7 +102,7 @@ def update_me(
     updates = body.model_dump(exclude_unset=True)
     if not updates:
         return AdminResponse.model_validate(admin)
-    updated = update_admin_profile(db, admin, updates)
+    updated = update_admin_profile(db, admin, **updates)
     return AdminResponse.model_validate(updated)
 
 

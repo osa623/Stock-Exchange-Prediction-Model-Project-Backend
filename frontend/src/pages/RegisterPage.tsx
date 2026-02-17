@@ -2,10 +2,10 @@ import { useState, useEffect, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { adminAuthApi } from "../services/api";
-import { Shield, UserPlus, AlertCircle, CheckCircle } from "lucide-react";
+import { Shield, UserPlus, AlertCircle, CheckCircle, LogIn } from "lucide-react";
 
 export default function RegisterPage() {
-  const { signUp } = useAuth();
+  const { user, signUp, signIn, adminProfile, recheckAdmin } = useAuth();
   const navigate = useNavigate();
 
   const [firstName, setFirstName] = useState("");
@@ -21,6 +21,20 @@ export default function RegisterPage() {
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [statusError, setStatusError] = useState("");
 
+  // If user is already an admin, redirect to dashboard
+  useEffect(() => {
+    if (adminProfile) {
+      navigate("/", { replace: true });
+    }
+  }, [adminProfile, navigate]);
+
+  // Pre-fill email from Firebase user if already logged in
+  useEffect(() => {
+    if (user?.email && !email) {
+      setEmail(user.email);
+    }
+  }, [user, email]);
+
   // Check if self-registration is open
   useEffect(() => {
     adminAuthApi
@@ -29,8 +43,6 @@ export default function RegisterPage() {
         setRegistrationOpen(res.data.registration_open);
       })
       .catch((err) => {
-        // If backend is down or table doesn't exist, allow registration attempt
-        // (the actual register call will fail with a clear error if not allowed)
         console.error("Failed to check registration status:", err);
         setRegistrationOpen(true);
         setStatusError(
@@ -40,25 +52,51 @@ export default function RegisterPage() {
       .finally(() => setCheckingStatus(false));
   }, []);
 
+  // Already logged in → only need to complete backend registration
+  const alreadyLoggedIn = !!user;
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
+    // Validate password fields only if not already logged in
+    if (!alreadyLoggedIn) {
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
+        return;
+      }
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters.");
+        return;
+      }
     }
 
     setLoading(true);
     try {
-      // 1. Create Firebase account
-      await signUp(email, password);
+      // Step 1: Ensure Firebase auth
+      if (!alreadyLoggedIn) {
+        try {
+          // Try creating a new Firebase account
+          await signUp(email, password);
+        } catch (fbErr: unknown) {
+          const msg = fbErr instanceof Error ? fbErr.message : "";
+          if (msg.includes("email-already-in-use")) {
+            // Account exists — sign in instead
+            try {
+              await signIn(email, password);
+            } catch {
+              setError(
+                "This email is already registered. Please use the correct password or sign in from the login page."
+              );
+              return;
+            }
+          } else {
+            throw fbErr;
+          }
+        }
+      }
 
-      // 2. Register as admin in the backend
+      // Step 2: Register as admin in the backend
       await adminAuthApi.register({
         first_name: firstName,
         last_name: lastName,
@@ -66,18 +104,20 @@ export default function RegisterPage() {
         phone_number: phone || undefined,
       });
 
-      navigate("/");
+      // Step 3: Refresh admin profile in context
+      await recheckAdmin();
+
+      // Navigate to dashboard
+      navigate("/", { replace: true });
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
-        const resp = (err as { response?: { data?: { detail?: string } } }).response;
+        const resp = (err as { response?: { data?: { detail?: string } } })
+          .response;
         setError(resp?.data?.detail || "Registration failed.");
       } else {
-        const msg = err instanceof Error ? err.message : "Registration failed.";
-        if (msg.includes("email-already-in-use")) {
-          setError("This email is already registered in Firebase. Please sign in instead.");
-        } else {
-          setError(msg);
-        }
+        const msg =
+          err instanceof Error ? err.message : "Registration failed.";
+        setError(msg);
       }
     } finally {
       setLoading(false);
@@ -99,7 +139,9 @@ export default function RegisterPage() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-500/10">
             <AlertCircle className="h-8 w-8 text-yellow-400" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Registration Closed</h1>
+          <h1 className="text-2xl font-bold text-white">
+            Registration Closed
+          </h1>
           <p className="mt-3 text-sm text-gray-400">
             An admin already exists. New admins must be invited by an existing
             administrator.
@@ -125,7 +167,9 @@ export default function RegisterPage() {
           </div>
           <h1 className="text-2xl font-bold text-white">Admin Registration</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Create the first super-admin account
+            {alreadyLoggedIn
+              ? "Complete your admin profile"
+              : "Create the first super-admin account"}
           </p>
         </div>
 
@@ -138,7 +182,9 @@ export default function RegisterPage() {
         ) : (
           <div className="mb-4 flex items-center gap-2 rounded-lg bg-cyan-500/10 px-4 py-3 text-sm text-cyan-400">
             <CheckCircle className="h-4 w-4 shrink-0" />
-            No admins found. You will be registered as the super admin.
+            {alreadyLoggedIn
+              ? `Signed in as ${user?.email}. Complete the form below to register as super admin.`
+              : "No admins found. You will be registered as the super admin."}
           </div>
         )}
 
@@ -148,7 +194,7 @@ export default function RegisterPage() {
           className="rounded-2xl border border-gray-800 bg-gray-900 p-8 shadow-xl"
         >
           <h2 className="mb-6 text-lg font-semibold text-white">
-            Create Account
+            {alreadyLoggedIn ? "Complete Registration" : "Create Account"}
           </h2>
 
           {error && (
@@ -187,17 +233,21 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <label className="mb-1 block text-sm font-medium text-gray-400">
-            Email
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="mb-4 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-            placeholder="admin@example.com"
-          />
+          {!alreadyLoggedIn && (
+            <>
+              <label className="mb-1 block text-sm font-medium text-gray-400">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="mb-4 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                placeholder="admin@example.com"
+              />
+            </>
+          )}
 
           <label className="mb-1 block text-sm font-medium text-gray-400">
             Phone Number{" "}
@@ -211,57 +261,66 @@ export default function RegisterPage() {
             placeholder="+1 234 567 8900"
           />
 
-          <label className="mb-1 block text-sm font-medium text-gray-400">
-            Password
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            className="mb-4 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-            placeholder="••••••••"
-          />
+          {!alreadyLoggedIn && (
+            <>
+              <label className="mb-1 block text-sm font-medium text-gray-400">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="mb-4 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                placeholder="••••••••"
+              />
 
-          <label className="mb-1 block text-sm font-medium text-gray-400">
-            Confirm Password
-          </label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            minLength={6}
-            className="mb-6 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-            placeholder="••••••••"
-          />
+              <label className="mb-1 block text-sm font-medium text-gray-400">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                className="mb-6 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                placeholder="••••••••"
+              />
+            </>
+          )}
 
           <button
             type="submit"
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-cyan-500 disabled:opacity-50"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-cyan-500 disabled:opacity-50"
           >
             {loading ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             ) : (
               <>
-                <UserPlus className="h-4 w-4" />
-                Create Super Admin
+                {alreadyLoggedIn ? (
+                  <LogIn className="h-4 w-4" />
+                ) : (
+                  <UserPlus className="h-4 w-4" />
+                )}
+                {alreadyLoggedIn
+                  ? "Complete Registration"
+                  : "Create Super Admin"}
               </>
             )}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Already have an account?{" "}
-          <Link
-            to="/login"
-            className="text-cyan-400 hover:text-cyan-300"
-          >
-            Sign in
-          </Link>
-        </p>
+        {!alreadyLoggedIn && (
+          <p className="mt-6 text-center text-sm text-gray-500">
+            Already have an account?{" "}
+            <Link to="/login" className="text-cyan-400 hover:text-cyan-300">
+              Sign in
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );

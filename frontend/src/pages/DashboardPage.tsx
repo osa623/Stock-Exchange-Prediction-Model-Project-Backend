@@ -20,7 +20,13 @@ export default function DashboardPage() {
     adminApi
       .getStats()
       .then((r) => setStats(r.data))
-      .catch((e) => setError(e.response?.data?.detail || "Failed to load stats"))
+      .catch((e) => {
+        if (e?.response?.status === 403) {
+          setError("Admin access required. Please register as admin first.");
+        } else {
+          setError(e.response?.data?.detail || e.message || "Failed to load stats");
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 

@@ -16,6 +16,18 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// Handle common response errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid — sign out
+      auth.signOut();
+    }
+    return Promise.reject(error);
+  }
+);
+
 // ── Admin endpoints ─────────────────────────────────────────────────────────
 
 export interface DashboardStats {

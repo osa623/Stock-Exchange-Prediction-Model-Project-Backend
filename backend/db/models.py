@@ -367,7 +367,7 @@ class Admin(Base):
         server_default="admin",
         nullable=False,
     )
-    is_active: Mapped[bool] = mapped_column(Integer, default=1, server_default="1", nullable=False)
+    is_active: Mapped[int] = mapped_column(Integer, default=1, server_default="1", nullable=False)
 
     # Who invited this admin (null for the first super_admin)
     invited_by_id: Mapped[int | None] = mapped_column(

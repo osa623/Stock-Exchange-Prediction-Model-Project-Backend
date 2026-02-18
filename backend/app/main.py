@@ -17,7 +17,7 @@ from db import models
 from common.config import settings
 from common.logging import get_logger
 from app.middleware.rate_limit import RateLimitMiddleware
-from app.routers import auth, users, billing, analysis, portfolio, watchlist, admin, admin_auth
+from app.routers import auth, users, billing, analysis, portfolio, watchlist, admin, admin_auth, reports
 
 logger = get_logger(__name__)
 
@@ -38,10 +38,24 @@ async def lifespan(app: FastAPI):
         logger.info("Database tables created/verified (dev mode)")
     else:
         logger.info("Skipping auto table creation (production mode)")
+
+    # Pre-warm MongoDB connection (non-blocking — app starts even if Mongo is down)
+    if settings.MONGO_DB_URL:
+        try:
+            from db.mongo import check_mongo_health
+            healthy = await check_mongo_health()
+            if healthy:
+                logger.info("MongoDB connection established")
+            else:
+                logger.warning("MongoDB not reachable at startup — reports will be unavailable until credentials are fixed")
+        except Exception as e:
+            logger.warning(f"MongoDB startup check failed: {e}")
     
     yield
     
     # Shutdown
+    from db.mongo import close_mongo
+    await close_mongo()
     logger.info("Shutting down application", extra={"event": "shutdown"})
 
 
@@ -269,5 +283,6 @@ app.include_router(billing.router, prefix="/billing", tags=["billing"])
 app.include_router(analysis.router, prefix="/analysis", tags=["analysis"])
 app.include_router(portfolio.router, prefix="/portfolio", tags=["portfolio"])
 app.include_router(watchlist.router, prefix="/watchlist", tags=["watchlist"])
+app.include_router(reports.router, prefix="/reports", tags=["reports"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(admin_auth.router, prefix="/admin/auth", tags=["admin-auth"])

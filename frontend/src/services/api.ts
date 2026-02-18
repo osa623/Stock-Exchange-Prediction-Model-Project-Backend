@@ -206,4 +206,91 @@ export const adminAuthApi = {
     api.delete(`/admin/auth/admins/${adminId}`),
 };
 
+// ── Report types ────────────────────────────────────────────────────────
+
+export interface ReportSummary {
+  id: string;
+  category: string;
+  subcategory: string | null;
+  title: string;
+  symbol: string | null;
+  access_level: "public" | "registered" | "premium";
+  summary: string | null;
+  tags: string[];
+  created_at: string | null;
+}
+
+export interface ReportDetail extends ReportSummary {
+  data: Record<string, unknown>;
+  updated_at: string | null;
+}
+
+export interface ReportFull extends ReportDetail {
+  raw_data: Record<string, unknown> | null;
+  methodology: string | null;
+  metadata: Record<string, unknown> | null;
+}
+
+export interface ReportListResponse {
+  reports: ReportSummary[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface FolderNode {
+  name: string;
+  path: string;
+  children: FolderNode[];
+  report_count: number;
+}
+
+export interface FolderTreeResponse {
+  tree: FolderNode[];
+  total_reports: number;
+}
+
+export interface ReportListParams {
+  category?: string;
+  subcategory?: string;
+  symbol?: string;
+  search?: string;
+  page?: number;
+  page_size?: number;
+}
+
+// ── Report API calls ────────────────────────────────────────────────────
+
+export const reportsApi = {
+  // Public (no auth needed)
+  getPublicReports: (params: ReportListParams) =>
+    api.get<ReportListResponse>("/reports/public", { params }),
+
+  getPublicReport: (reportId: string) =>
+    api.get<ReportSummary>(`/reports/public/${reportId}`),
+
+  // Folder tree (works with or without auth)
+  getFolderTree: () => api.get<FolderTreeResponse>("/reports/tree"),
+
+  // Registered (auth required)
+  getReports: (params: ReportListParams) =>
+    api.get<ReportListResponse>("/reports/list", { params }),
+
+  getReportDetail: (reportId: string) =>
+    api.get<ReportDetail>(`/reports/detail/${reportId}`),
+
+  // Premium
+  getPremiumReports: (params: ReportListParams) =>
+    api.get<ReportListResponse>("/reports/premium/list", { params }),
+
+  getPremiumReport: (reportId: string) =>
+    api.get<ReportFull>(`/reports/premium/${reportId}`),
+
+  exportReport: (reportId: string) =>
+    api.get<{ export_format: string; report: ReportFull }>(
+      `/reports/premium/${reportId}/export`
+    ),
+};
+
 export default api;

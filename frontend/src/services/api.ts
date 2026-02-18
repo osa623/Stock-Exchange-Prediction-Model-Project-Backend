@@ -206,91 +206,50 @@ export const adminAuthApi = {
     api.delete(`/admin/auth/admins/${adminId}`),
 };
 
-// ── Report types ────────────────────────────────────────────────────────
+// ── Financial Data types (Node backend) ─────────────────────────────────
 
-export interface ReportSummary {
+export interface FileReference {
+  type: string;
   id: string;
-  category: string;
-  subcategory: string | null;
-  title: string;
-  symbol: string | null;
-  access_level: "public" | "registered" | "premium";
-  summary: string | null;
-  tags: string[];
-  created_at: string | null;
 }
 
-export interface ReportDetail extends ReportSummary {
+export interface YearStructure {
+  year: string;
+  files: FileReference[];
+}
+
+export interface CompanyStructure {
+  company: string;
+  years: YearStructure[];
+}
+
+export interface SectorStructure {
+  _id: string;
+  companies: CompanyStructure[];
+}
+
+export interface ExtractedDataRecord {
+  _id: string;
+  sector: string;
+  company: string;
+  year: string;
+  type: string;
   data: Record<string, unknown>;
-  updated_at: string | null;
+  pdfId?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface ReportFull extends ReportDetail {
-  raw_data: Record<string, unknown> | null;
-  methodology: string | null;
-  metadata: Record<string, unknown> | null;
-}
+// ── Financial Data API calls (Node backend on /api/data) ────────────────
 
-export interface ReportListResponse {
-  reports: ReportSummary[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
+export const dataApi = {
+  /** Get sector → company → year hierarchy */
+  getStructure: () =>
+    api.get<SectorStructure[]>("/data/structure"),
 
-export interface FolderNode {
-  name: string;
-  path: string;
-  children: FolderNode[];
-  report_count: number;
-}
-
-export interface FolderTreeResponse {
-  tree: FolderNode[];
-  total_reports: number;
-}
-
-export interface ReportListParams {
-  category?: string;
-  subcategory?: string;
-  symbol?: string;
-  search?: string;
-  page?: number;
-  page_size?: number;
-}
-
-// ── Report API calls ────────────────────────────────────────────────────
-
-export const reportsApi = {
-  // Public (no auth needed)
-  getPublicReports: (params: ReportListParams) =>
-    api.get<ReportListResponse>("/reports/public", { params }),
-
-  getPublicReport: (reportId: string) =>
-    api.get<ReportSummary>(`/reports/public/${reportId}`),
-
-  // Folder tree (works with or without auth)
-  getFolderTree: () => api.get<FolderTreeResponse>("/reports/tree"),
-
-  // Registered (auth required)
-  getReports: (params: ReportListParams) =>
-    api.get<ReportListResponse>("/reports/list", { params }),
-
-  getReportDetail: (reportId: string) =>
-    api.get<ReportDetail>(`/reports/detail/${reportId}`),
-
-  // Premium
-  getPremiumReports: (params: ReportListParams) =>
-    api.get<ReportListResponse>("/reports/premium/list", { params }),
-
-  getPremiumReport: (reportId: string) =>
-    api.get<ReportFull>(`/reports/premium/${reportId}`),
-
-  exportReport: (reportId: string) =>
-    api.get<{ export_format: string; report: ReportFull }>(
-      `/reports/premium/${reportId}/export`
-    ),
+  /** Get single extracted data record by ID */
+  getById: (id: string) =>
+    api.get<ExtractedDataRecord>(`/data/${id}`),
 };
 
 export default api;

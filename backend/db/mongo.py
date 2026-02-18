@@ -6,6 +6,8 @@ Uses motor (async driver) for non-blocking operations within FastAPI.
 Supports both native MongoDB and Azure CosmosDB MongoDB API.
 """
 
+import time
+
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import ASCENDING, DESCENDING
 from common.config import settings
@@ -16,6 +18,9 @@ logger = get_logger(__name__)
 _client: AsyncIOMotorClient | None = None
 _db = None
 _available: bool | None = None  # None = not tested yet
+_last_health_check: float = 0.0  # timestamp of last health check
+_HEALTH_RETRY_INTERVAL = 30  # seconds between retry attempts when unavailable
+_HEALTH_CHECK_INTERVAL = 120  # seconds between periodic health checks when available
 
 DATABASE_NAME = "stock_reports"
 
@@ -44,22 +49,28 @@ async def get_mongo_client() -> AsyncIOMotorClient:
 
 async def check_mongo_health() -> bool:
     """Ping MongoDB and return True if reachable + authenticated."""
-    global _available
+    global _available, _last_health_check
     try:
         client = await get_mongo_client()
         await client.admin.command("ping")
         _available = True
+        _last_health_check = time.time()
         return True
     except Exception as e:
         _available = False
+        _last_health_check = time.time()
         logger.warning("MongoDB health check failed: %s", e)
         return False
 
 
 async def is_mongo_available() -> bool:
-    """Return cached availability. Runs health check on first call."""
-    global _available
+    """Return cached availability. Re-checks periodically on failure."""
+    global _available, _last_health_check
     if _available is None:
+        return await check_mongo_health()
+    # If previously unavailable, retry after the retry interval
+    if not _available and (time.time() - _last_health_check) >= _HEALTH_RETRY_INTERVAL:
+        logger.info("Retrying MongoDB health check after previous failure")
         return await check_mongo_health()
     return _available
 
@@ -68,8 +79,9 @@ async def get_mongo_db():
     """
     Return the default database handle.
     Raises MongoUnavailableError if the connection can't be established.
+    Periodically verifies the connection is still alive.
     """
-    global _db
+    global _db, _last_health_check
     if _db is None:
         if not await is_mongo_available():
             raise MongoUnavailableError(
@@ -80,7 +92,37 @@ async def get_mongo_db():
         # Best-effort index creation (may fail on CosmosDB)
         await _ensure_indexes(_db)
         logger.info("MongoDB database '%s' ready", DATABASE_NAME)
+    elif (time.time() - _last_health_check) >= _HEALTH_CHECK_INTERVAL:
+        # Periodic liveness check — not on every request
+        try:
+            client = await get_mongo_client()
+            await client.admin.command("ping")
+            _last_health_check = time.time()
+        except Exception:
+            logger.warning("MongoDB connection lost — attempting reconnect")
+            await _reset_connection()
+            if not await check_mongo_health():
+                raise MongoUnavailableError(
+                    "MongoDB reconnection failed. Check MONGO_DB_URL credentials."
+                )
+            client = await get_mongo_client()
+            _db = client[DATABASE_NAME]
+            await _ensure_indexes(_db)
+            logger.info("MongoDB reconnected to '%s'", DATABASE_NAME)
     return _db
+
+
+async def _reset_connection():
+    """Reset cached client and db references for reconnection."""
+    global _client, _db, _available
+    if _client:
+        try:
+            _client.close()
+        except Exception:
+            pass
+    _client = None
+    _db = None
+    _available = None
 
 
 async def _ensure_indexes(db):

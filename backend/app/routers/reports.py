@@ -320,6 +320,21 @@ async def cache_stats(
     }
 
 
+@router.post("/cache/clear")
+async def cache_clear(
+    uid: str = Depends(get_current_uid),
+    db: Session = Depends(get_db),
+):
+    """Admin-only: clear all report caches to force fresh data."""
+    from app.middleware.admin_auth import require_admin
+    require_admin(uid, db)
+    await report_list_cache.clear()
+    await report_detail_cache.clear()
+    await folder_tree_cache.clear()
+    logger.info("Report caches cleared by admin", extra={"uid": uid, "event": "cache_clear"})
+    return {"status": "ok", "message": "All report caches cleared"}
+
+
 @router.get("/status")
 async def mongo_status():
     """Check MongoDB connection health (public endpoint for diagnostics)."""

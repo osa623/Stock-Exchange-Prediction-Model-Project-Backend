@@ -296,6 +296,10 @@ async def seed():
     result = await coll.insert_many(SEED_REPORTS)
     print(f"Inserted {len(result.inserted_ids)} reports")
 
+    # Verify count
+    total = await coll.count_documents({})
+    print(f"Verified: {total} reports in collection")
+
     # Verify folder tree
     from modules.reports.repository import get_folder_tree
     tree = await get_folder_tree(db)
@@ -306,6 +310,20 @@ async def seed():
             print(f"    └─ {child['name']} ({child['report_count']} reports)")
 
     await close_mongo()
+
+    # Try to clear the running server's in-memory cache via API
+    try:
+        import urllib.request
+        req = urllib.request.Request(
+            "http://127.0.0.1:9000/reports/cache/clear",
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=3)
+        print("\nServer cache cleared via API")
+    except Exception:
+        print("\nNote: Could not clear server cache (server might not be running or auth required).")
+        print("  The server's in-memory cache will expire within 2 minutes.")
+
     print("\nSeed complete.")
 
 

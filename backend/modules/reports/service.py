@@ -80,7 +80,9 @@ async def list_reports_public(
         "page_size": page_size,
         "total_pages": total_pages,
     }
-    await report_list_cache.set(cache_key, result)
+    # Only cache non-empty results to avoid stale empty responses
+    if total > 0:
+        await report_list_cache.set(cache_key, result)
     return result
 
 
@@ -131,7 +133,9 @@ async def list_reports_registered(
         "page_size": page_size,
         "total_pages": total_pages,
     }
-    await report_list_cache.set(cache_key, result)
+    # Only cache non-empty results to avoid stale empty responses
+    if total > 0:
+        await report_list_cache.set(cache_key, result)
     return result
 
 
@@ -200,7 +204,9 @@ async def list_reports_premium(
         "page_size": page_size,
         "total_pages": total_pages,
     }
-    await report_list_cache.set(cache_key, result)
+    # Only cache non-empty results to avoid stale empty responses
+    if total > 0:
+        await report_list_cache.set(cache_key, result)
     return result
 
 

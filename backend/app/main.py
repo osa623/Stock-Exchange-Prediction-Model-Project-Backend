@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
         logger.info("Database tables created/verified (dev mode)")
     else:
         logger.info("Skipping auto table creation (production mode)")
-    
+
     yield
     
     # Shutdown

@@ -206,4 +206,50 @@ export const adminAuthApi = {
     api.delete(`/admin/auth/admins/${adminId}`),
 };
 
+// ── Financial Data types (Node backend) ─────────────────────────────────
+
+export interface FileReference {
+  type: string;
+  id: string;
+}
+
+export interface YearStructure {
+  year: string;
+  files: FileReference[];
+}
+
+export interface CompanyStructure {
+  company: string;
+  years: YearStructure[];
+}
+
+export interface SectorStructure {
+  _id: string;
+  companies: CompanyStructure[];
+}
+
+export interface ExtractedDataRecord {
+  _id: string;
+  sector: string;
+  company: string;
+  year: string;
+  type: string;
+  data: Record<string, unknown>;
+  pdfId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Financial Data API calls (Node backend on /api/data) ────────────────
+
+export const dataApi = {
+  /** Get sector → company → year hierarchy */
+  getStructure: () =>
+    api.get<SectorStructure[]>("/data/structure"),
+
+  /** Get single extracted data record by ID */
+  getById: (id: string) =>
+    api.get<ExtractedDataRecord>(`/data/${id}`),
+};
+
 export default api;

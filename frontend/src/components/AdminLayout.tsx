@@ -7,11 +7,13 @@ import {
   Shield,
   Menu,
   X,
+  FileBarChart,
 } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/reports", icon: FileBarChart, label: "Reports" },
   { to: "/users", icon: Users, label: "Users" },
 ];
 

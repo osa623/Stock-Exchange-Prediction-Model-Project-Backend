@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # Secret Key (for any future JWT/session needs)
     SECRET_KEY: str = "change-this-in-production"
 
+    # MongoDB (report storage)
+    MONGO_DB_URL: str = ""
+
     # Admin – comma-separated Firebase UIDs
     ADMIN_UIDS: str = ""
 

@@ -7,7 +7,8 @@
  */
 
 require("dotenv").config();
-const { getDb, close } = require("./config/db");
+const mongoose = require("mongoose");
+const connectDB = require("./config/db");
 
 const now = new Date();
 
@@ -185,7 +186,8 @@ const SEED_REPORTS = [
 ];
 
 async function seed() {
-  const db = await getDb();
+  await connectDB();
+  const db = mongoose.connection.db;
   const coll = db.collection("reports");
 
   await coll.deleteMany({});
@@ -197,7 +199,7 @@ async function seed() {
   const total = await coll.countDocuments({});
   console.log(`Verified: ${total} reports in collection`);
 
-  await close();
+  await mongoose.connection.close();
   console.log("\nSeed complete.");
 }
 

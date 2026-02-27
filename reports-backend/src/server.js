@@ -7,7 +7,6 @@ dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 const connectDB = require('./config/db');
 const dataRoutes = require('./routes/reportRoute');
-const reportsRoutes = require('./routes/reportsRoute');
 
 // Connect to MongoDB
 connectDB();
@@ -32,7 +31,7 @@ app.use((req, _res, next) => {
 
 // Routes
 app.use('/api/data', dataRoutes);
-app.use('/api/reports', reportsRoutes);
+
 
 app.get('/', (_req, res) => {
     res.json({
